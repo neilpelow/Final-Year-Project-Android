@@ -23,16 +23,9 @@ import com.facebook.ProfileTracker;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
-
 import java.util.Arrays;
 
-
-/**
- * A placeholder fragment containing a simple view.
- */
 public class MainFragment extends Fragment {
-
-    private TextView mTextDetails;
 
     private CallbackManager mCallbackManager;
     private ProfileTracker mProfileTracker;
@@ -53,8 +46,6 @@ public class MainFragment extends Fragment {
                 // because it is called by its constructor, internally.
             }
             else {
-                Profile profile = Profile.getCurrentProfile();
-                displayWelcomeMessage(profile);
                 GraphApi.getUserInformation();
             }
         }
@@ -97,8 +88,6 @@ public class MainFragment extends Fragment {
         loginButton.setReadPermissions(Arrays.asList("user_status","user_events"));
         loginButton.setFragment(this);
         loginButton.registerCallback(mCallbackManager, mCallback);
-
-        mTextDetails = (TextView) view.findViewById(R.id.text_details);
     }
 
     @Override
@@ -112,13 +101,5 @@ public class MainFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
-        Profile profile = Profile.getCurrentProfile();
-        displayWelcomeMessage(profile);
-    }
-
-    private void displayWelcomeMessage(Profile profile){
-        if(profile != null) {
-            mTextDetails.setText("Welcome " + profile.getName());
-        }
     }
 }
