@@ -39,6 +39,7 @@ public class MainFragment extends Fragment {
                     protected void onCurrentProfileChanged(Profile profile, Profile profile2) {
                         // profile2 is the new profile
                         Log.v("facebook - profile", profile2.getFirstName());
+                        GraphApi.getUserInformation();
                         mProfileTracker.stopTracking();
                     }
                 };

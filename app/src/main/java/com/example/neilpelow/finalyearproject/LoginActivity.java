@@ -110,18 +110,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_SIGNUP) {
-            if (resultCode == RESULT_OK) {
-
-                // TODO: Implement successful signup logic here
-                // By default we just finish the Activity and log them in automatically
-                this.finish();
-            }
-        }
-    }
-
-    @Override
     public void onBackPressed() {
         // disable going back to the LoginActivity
         moveTaskToBack(true);
@@ -129,7 +117,8 @@ public class LoginActivity extends AppCompatActivity {
 
     public void onLoginSuccess() {
         _loginButton.setEnabled(true);
-        finish();
+        Toast.makeText(getBaseContext(), "Login validation passed", Toast.LENGTH_LONG).show();
+        //Open new activity
     }
 
     public void onLoginFailed() {
