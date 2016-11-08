@@ -33,6 +33,8 @@
 
         <activity android:name=".SignupActivity" android:theme="@style/AppTheme" />
 
+        <activity android:name=".ProfileActivity" android:theme="@style/AppTheme" />
+
     </application>
 
 </manifest>

@@ -25,6 +25,8 @@ import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import java.util.Arrays;
 
+import static com.facebook.FacebookSdk.getApplicationContext;
+
 public class MainFragment extends Fragment {
 
     private CallbackManager mCallbackManager;
@@ -46,9 +48,12 @@ public class MainFragment extends Fragment {
                 // no need to call startTracking() on mProfileTracker
                 // because it is called by its constructor, internally.
             }
+
             else {
                 GraphApi.getUserInformation();
             }
+            Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+            startActivity(intent);
         }
 
         @Override

@@ -87,8 +87,7 @@ public class LoginActivity extends AppCompatActivity {
 
         _loginButton.setEnabled(false);
 
-        final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this,
-                R.style.AppTheme);
+        final ProgressDialog progressDialog = new ProgressDialog(LoginActivity.this, R.style.AppTheme);
         progressDialog.setIndeterminate(true);
         progressDialog.setMessage("Authenticating...");
         progressDialog.show();
@@ -96,7 +95,7 @@ public class LoginActivity extends AppCompatActivity {
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
-        // TODO: Implement your own authentication logic here.
+        // TODO: Implement authentication logic here.
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
@@ -119,6 +118,9 @@ public class LoginActivity extends AppCompatActivity {
         _loginButton.setEnabled(true);
         Toast.makeText(getBaseContext(), "Login validation passed", Toast.LENGTH_LONG).show();
         //Open new activity
+        Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+        startActivity(intent);
+        finish(); //End main activity so user cannot navigate back using back button.
     }
 
     public void onLoginFailed() {
