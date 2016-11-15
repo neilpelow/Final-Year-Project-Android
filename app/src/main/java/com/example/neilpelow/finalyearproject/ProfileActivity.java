@@ -9,8 +9,17 @@ import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.Profile;
+import com.microsoft.windowsazure.mobileservices.*;
+import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
 
-/**
+import org.w3c.dom.Text;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+
+import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
+
+/*
  * Created by neilpelow on 08/11/2016.
  */
 
@@ -29,6 +38,22 @@ public class ProfileActivity extends AppCompatActivity {
         else {
             Log.d("Profile","Profile info not loaded");
         }
+
+        TextView mTextView;
+
+        mTextView = (TextView) findViewById(R.id.textView);
+
+
+        /*
+        try {
+            mClient = new MobileServiceClient(
+                    "https://c13481318.azurewebsites.net",
+                    this
+            );
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        */
     }
 
     public static void getProfileInformation(){
@@ -52,5 +77,4 @@ public class ProfileActivity extends AppCompatActivity {
         request.setParameters(parameters);
         request.executeAsync();
     }
-
 }

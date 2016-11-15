@@ -25,9 +25,12 @@ import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import java.util.Arrays;
 
+import static android.content.ContentValues.TAG;
 import static com.facebook.FacebookSdk.getApplicationContext;
 
 public class MainFragment extends Fragment {
+
+    private User mUser = new User();
 
     private CallbackManager mCallbackManager;
     private ProfileTracker mProfileTracker;
@@ -35,6 +38,8 @@ public class MainFragment extends Fragment {
 
         @Override
         public void onSuccess(LoginResult loginResult) {
+            mUser.UserLoggedIn();
+            Log.d(TAG, "onSuccess: User login flag set");
             if(Profile.getCurrentProfile() == null) {
                 mProfileTracker = new ProfileTracker() {
                     @Override
@@ -52,8 +57,10 @@ public class MainFragment extends Fragment {
             else {
                 GraphApi.getUserInformation();
             }
+
             Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
             startActivity(intent);
+            getActivity().finish();
         }
 
         @Override
@@ -79,6 +86,12 @@ public class MainFragment extends Fragment {
             FacebookSdk.setIsDebugEnabled(true);
             FacebookSdk.addLoggingBehavior(LoggingBehavior.INCLUDE_ACCESS_TOKENS);
         }
+        if(Profile.getCurrentProfile() != null) {
+            Log.d(TAG, "onCreate: User is already logged in");
+            Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+            startActivity(intent);
+            getActivity().finish();
+        }
     }
 
     @Override
@@ -94,6 +107,8 @@ public class MainFragment extends Fragment {
         loginButton.setReadPermissions(Arrays.asList("user_status","user_events"));
         loginButton.setFragment(this);
         loginButton.registerCallback(mCallbackManager, mCallback);
+
+
     }
 
     @Override
@@ -107,5 +122,11 @@ public class MainFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
+        if(Profile.getCurrentProfile() != null) {
+            Log.d(TAG, "onCreate: User is already logged in");
+            Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+            startActivity(intent);
+            getActivity().finish();
+        }
     }
 }
