@@ -11,6 +11,7 @@ import com.facebook.GraphResponse;
 import com.facebook.Profile;
 import com.microsoft.windowsazure.mobileservices.*;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
+import com.microsoft.windowsazure.mobileservices.table.TableOperationCallback;
 
 import org.w3c.dom.Text;
 
@@ -24,6 +25,8 @@ import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
  */
 
 public class ProfileActivity extends AppCompatActivity {
+    TextView mTextView;
+    MobileServiceClient mClient;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,12 +42,8 @@ public class ProfileActivity extends AppCompatActivity {
             Log.d("Profile","Profile info not loaded");
         }
 
-        TextView mTextView;
-
         mTextView = (TextView) findViewById(R.id.textView);
 
-
-        /*
         try {
             mClient = new MobileServiceClient(
                     "https://c13481318.azurewebsites.net",
@@ -53,7 +52,22 @@ public class ProfileActivity extends AppCompatActivity {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-        */
+    }
+
+    public void insertData() {
+        final Event event = new Event();
+        event.name = "Awesome item";
+        mClient.getTable(Event.class).insert(event, new TableOperationCallback<Event>() {
+            public void onCompleted(Event entity, Exception exception, ServiceFilterResponse response) {
+                if (exception == null) {
+                    // Insert succeeded
+                    Log.d("Db", "onCompleted: Insert completed");
+                } else {
+                    // Insert failed
+                    Log.d("Db", "onCompleted: Insert failed");
+                }
+            }
+        });
     }
 
     public static void getProfileInformation(){
