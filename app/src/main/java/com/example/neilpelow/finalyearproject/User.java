@@ -9,24 +9,4 @@ import static com.facebook.GraphRequest.TAG;
  */
 
 public class User {
-    boolean loggedIn = false;
-
-    String name;
-
-    public User setLoginToFalse(User mUser ) {
-        mUser.loggedIn = false;
-        return mUser;
-    }
-
-    public boolean UserLoggedIn() {
-        return loggedIn = true;
-    }
-
-    public boolean isUserLoggedIn(User mUser) {
-        if(mUser.loggedIn == true){
-            return true;
-        } else {
-            return false;
-        }
-    }
 }

@@ -5,5 +5,10 @@ package com.example.neilpelow.finalyearproject;
  */
 
 public class Event {
+    String description;
     String name;
+    String address;
+    String startTime;
+    String id;
+    String rsvp;
 }

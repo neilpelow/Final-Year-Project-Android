@@ -30,16 +30,12 @@ import static com.facebook.FacebookSdk.getApplicationContext;
 
 public class MainFragment extends Fragment {
 
-    private User mUser = new User();
-
     private CallbackManager mCallbackManager;
     private ProfileTracker mProfileTracker;
     private FacebookCallback<LoginResult> mCallback=new FacebookCallback<LoginResult>() {
 
         @Override
         public void onSuccess(LoginResult loginResult) {
-            mUser.UserLoggedIn();
-            Log.d(TAG, "onSuccess: User login flag set");
             if(Profile.getCurrentProfile() == null) {
                 mProfileTracker = new ProfileTracker() {
                     @Override
@@ -86,7 +82,7 @@ public class MainFragment extends Fragment {
             FacebookSdk.setIsDebugEnabled(true);
             FacebookSdk.addLoggingBehavior(LoggingBehavior.INCLUDE_ACCESS_TOKENS);
         }
-        if(Profile.getCurrentProfile() != null) {
+        if(Profile.getCurrentProfile() != null && AccessToken.getCurrentAccessToken() != null) {
             Log.d(TAG, "onCreate: User is already logged in");
             Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
             startActivity(intent);
@@ -122,7 +118,7 @@ public class MainFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
-        if(Profile.getCurrentProfile() != null) {
+        if(Profile.getCurrentProfile() != null && AccessToken.getCurrentAccessToken() != null) {
             Log.d(TAG, "onCreate: User is already logged in");
             Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
             startActivity(intent);

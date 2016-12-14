@@ -13,6 +13,9 @@ import com.microsoft.windowsazure.mobileservices.*;
 import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
 import com.microsoft.windowsazure.mobileservices.table.TableOperationCallback;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
@@ -36,7 +39,8 @@ public class ProfileActivity extends AppCompatActivity {
         Log.d("Profile","Profile activity loaded");
         if(Profile.getCurrentProfile() != null) {
             getProfileInformation();
-            Log.d("Profile","Profile info loaded");
+            getEventInformation();
+            Log.d("Profile","Profile and event info loaded");
         }
         else {
             Log.d("Profile","Profile info not loaded");
@@ -54,7 +58,7 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    public void insertData() {
+    public void insertDataToCloudDB() {
         final Event event = new Event();
         event.name = "Awesome item";
         mClient.getTable(Event.class).insert(event, new TableOperationCallback<Event>() {
@@ -82,12 +86,50 @@ public class ProfileActivity extends AppCompatActivity {
                         //Log user information
                         Log.d("Graph","Profile info successfully collected");
                         Log.d("Graph",response.getRawResponse());
-                        Log.d("Graph",response.getRequest().toString());
                     }
                 });
 
         Bundle parameters = new Bundle();
-        parameters.putString("fields", "name,events");
+        parameters.putString("fields", "name");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
+    public static void getEventInformation(){
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        Profile profile = Profile.getCurrentProfile();
+        GraphRequest request = GraphRequest.newGraphPathRequest(
+                accessToken,
+                "/" + profile.getId(),
+                new GraphRequest.Callback() {
+                    @Override
+                    public void onCompleted(GraphResponse response) {
+                        //Log user information
+                        String result = response.getRawResponse();
+                        Log.d("Graph","Event info successfully collected");
+                        Log.d("Graph",result);
+
+                        try{
+                            JSONObject resultsJSON = new JSONObject(result);
+                            JSONObject eventsJSON = new JSONObject(resultsJSON.toString());
+                            JSONArray eventsDataJSON = eventsJSON.getJSONArray("data");
+
+                            for(int i = 0; i < eventsDataJSON.length(); i++) {
+                                JSONObject eventObject = eventsDataJSON.getJSONObject(i);
+                                String eventObjectItem1 = eventObject.getString("description");
+                                Log.d("Event", eventObjectItem1);
+                            }
+                        } catch (Exception e){
+                            //Opps
+                            Log.d("JSON", "JSON exception");
+                        }
+
+
+                    }
+                });
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "events");
         request.setParameters(parameters);
         request.executeAsync();
     }
