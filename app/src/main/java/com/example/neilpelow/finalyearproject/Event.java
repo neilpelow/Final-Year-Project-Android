@@ -5,10 +5,47 @@ package com.example.neilpelow.finalyearproject;
  */
 
 public class Event {
-    String description;
-    String name;
-    String address;
-    String startTime;
-    String id;
-    String rsvp;
+    private int id;
+    private String description;
+    private String name;
+    private String address;
+    private String startTime;
+    private String rsvpStatus;
+
+    public Event() {;
+
+    }
+
+    public Event(int id, String description, String name, String address, String startTime, String rsvpStatus) {
+        this.id = id;
+        this.description = description;
+        this.name = name;
+        this.address = address;
+        this.startTime = startTime;
+        this.rsvpStatus = rsvpStatus;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public String getStartTime() {
+        return startTime;
+    }
+
+    public String getRsvpStatus() {
+        return rsvpStatus;
+    }
 }
