@@ -59,32 +59,7 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
                     for(int i = 0; i < dataJSONArray.length(); i++){
                         JSONObject event = dataJSONArray.getJSONObject(i);
                         Event myEvent = new Event();
-
-                        //Get event object values
-                        if(!event.isNull("name")) {
-                            myEvent.name = event.getString("name");
-                        }
-
-                        if(!event.isNull("id")) {
-                            myEvent.id = event.getInt("id");
-                        }
-
-                        if(!event.isNull("description")) {
-                            myEvent.description = event.getString("description");
-                        }
-
-                        if(!event.isNull("address")) {
-                            myEvent.address = event.getString("address");
-                        }
-
-                        if(!event.isNull("startTime")) {
-                            myEvent.startTime = event.getString("startTime");
-                        }
-
-                        if(!event.isNull("rsvpStatus")) {
-                            myEvent.rsvpStatus = event.getString("rsvpStatus");
-                        }
-
+                        createEventList(event, myEvent);
                         eventList.add(myEvent);
                     }
                     onLoaded(eventList);
@@ -95,6 +70,8 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
             }
         });
     }
+
+
 
     public void onLoaded(List<Event> eventList) {
 
@@ -108,6 +85,39 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
         }
 
         loadListView();
+    }
+
+    private Event createEventList (JSONObject event, Event myEvent) {
+            //Get event object values
+        try {
+            if(!event.isNull("name")) {
+                myEvent.name = event.getString("name");
+            }
+
+            if(!event.isNull("id")) {
+                myEvent.id = event.getInt("id");
+            }
+
+            if(!event.isNull("description")) {
+                myEvent.description = event.getString("description");
+            }
+
+            if(!event.isNull("address")) {
+                myEvent.address = event.getString("address");
+            }
+
+            if(!event.isNull("startTime")) {
+                myEvent.startTime = event.getString("startTime");
+            }
+
+            if(!event.isNull("rsvpStatus")) {
+                myEvent.rsvpStatus = event.getString("rsvpStatus");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return myEvent;
     }
 
 
