@@ -1,141 +1,128 @@
 package com.example.neilpelow.finalyearproject;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
-import com.facebook.AccessToken;
-import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.facebook.Profile;
-
-import com.microsoft.windowsazure.mobileservices.*;
-import com.microsoft.windowsazure.mobileservices.http.ServiceFilterResponse;
-import com.microsoft.windowsazure.mobileservices.table.TableOperationCallback;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
+import static com.facebook.internal.FacebookRequestErrorClassification.KEY_NAME;
+import static java.util.Objects.isNull;
 
 /*
  * Created by neilpelow on 08/11/2016.
  */
 
-public class ProfileActivity extends AppCompatActivity {
-    MobileServiceClient mClient;
+public class ProfileActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
+    private ListView mListView;
+    private List<HashMap<String, String>> mEventMapList = new ArrayList<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
-        Log.d("Profile","Profile activity loaded");
-        if(Profile.getCurrentProfile() != null) {
-            getProfileInformation();
-            getEventInformation();
-            Log.d("Profile","Profile and event info loaded");
-        }
-        else {
-            Log.d("Profile","Profile info not loaded");
-        }
+        mListView = (ListView) findViewById(R.id.list_view);
+        mListView.setOnItemClickListener(this);
 
+        LoadJSON j = new LoadJSON();
+        j.loadJSON(new Callback() {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void onCompleted(Object data) throws JSONException {
+                GraphResponse response = (GraphResponse) data;
+                String stringResponse = response.getRawResponse();
+                JSONObject json = new JSONObject(stringResponse);
+                //TODO: Parse response String into event list to be passed to onLoaded method.
+                try {
+                    JSONObject eventJSONObject = json.getJSONObject("events");
+                    JSONArray dataJSONArray = eventJSONObject.getJSONArray("data");
 
-        try {
-            mClient = new MobileServiceClient(
-                    "https://c13481318.azurewebsites.net",
-                    this
-            );
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-    }
+                    List<Event> eventList = new ArrayList<Event>();
 
+                    for(int i = 0; i < dataJSONArray.length(); i++){
+                        JSONObject event = dataJSONArray.getJSONObject(i);
+                        Event myEvent = new Event();
 
-
-    public static void getProfileInformation(){
-        AccessToken accessToken = AccessToken.getCurrentAccessToken();
-        Profile profile = Profile.getCurrentProfile();
-        GraphRequest request = GraphRequest.newGraphPathRequest(
-                accessToken,
-                "/" + profile.getId(),
-                new GraphRequest.Callback() {
-                    @Override
-                    public void onCompleted(GraphResponse response) {
-                        //Log user information
-                        Log.d("Graph","Profile info successfully collected");
-                        Log.d("Graph",response.getRawResponse());
-                    }
-                });
-
-        Bundle parameters = new Bundle();
-        parameters.putString("fields", "name");
-        request.setParameters(parameters);
-        request.executeAsync();
-    }
-
-    public void getEventInformation(){
-        AccessToken accessToken = AccessToken.getCurrentAccessToken();
-        Profile profile = Profile.getCurrentProfile();
-        GraphRequest request = GraphRequest.newGraphPathRequest(
-                accessToken,
-                "/" + profile.getId(),
-                new GraphRequest.Callback() {
-                    @Override
-                    public void onCompleted(GraphResponse response) {
-                        //Log user event information.
-                        try{
-                            JSONObject resultsJSON = response.getJSONObject();
-                            JSONObject eventsJSON = resultsJSON.getJSONObject("events");
-                            JSONArray dataJSON = eventsJSON.getJSONArray("data");
-
-                            //Use list here to instantiate the correct number of event objects.
-                            for(int i = 0; i < dataJSON.length(); i++) {
-                                JSONObject eventObject = dataJSON.getJSONObject(i);
-                                Event event = new Event();
-                                //Get each attribute of JSON event object and pass into Event object.
-                                //Add error checking to this later.
-                                event.id = eventObject.getString("id");
-                                event.description = eventObject.getString("description");
-
-                                //Display in list view.
-
-
-                                //Insert event to Db.
-                                insertDataToCloudDB(event);
-
-
-                            }
-                        } catch (Exception e){
-                            //Opps
-                            e.printStackTrace();
+                        //Get event object values
+                        if(!event.isNull("name")) {
+                            myEvent.name = event.getString("name");
                         }
-                    }
-                });
 
-        Bundle parameters = new Bundle();
-        parameters.putString("fields", "events");
-        request.setParameters(parameters);
-        request.executeAsync();
+                        if(!event.isNull("id")) {
+                            myEvent.id = event.getInt("id");
+                        }
+
+                        if(!event.isNull("description")) {
+                            myEvent.description = event.getString("description");
+                        }
+
+                        if(!event.isNull("address")) {
+                            myEvent.address = event.getString("address");
+                        }
+
+                        if(!event.isNull("startTime")) {
+                            myEvent.startTime = event.getString("startTime");
+                        }
+
+                        if(!event.isNull("rsvpStatus")) {
+                            myEvent.rsvpStatus = event.getString("rsvpStatus");
+                        }
+
+                        eventList.add(myEvent);
+                    }
+                    onLoaded(eventList);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
-    public void insertDataToCloudDB(Event event) {
-        mClient.getTable(Event.class).insert(event, new TableOperationCallback<Event>() {
-        public void onCompleted(Event entity, Exception exception, ServiceFilterResponse response) {
-            if (exception == null) {
-                // Insert succeeded
-                Log.d("Db", "onCompleted: Insert completed");
-            } else {
-                // Insert failed
-                Log.d("Db", "onCompleted: Insert failed");
-            }
+    public void onLoaded(List<Event> eventList) {
+
+        for (Event event : eventList) {
+
+            HashMap<String, String> map = new HashMap<>();
+
+            map.put(KEY_NAME, event.getName());
+
+            mEventMapList.add(map);
         }
-    });
-}
+
+        loadListView();
+    }
+
+
+    private void loadListView() {
+
+        ListAdapter adapter = new SimpleAdapter(ProfileActivity.this, mEventMapList, R.layout.list_item,
+                new String[] {KEY_NAME},
+                new int[] {R.id.name});
+
+        mListView.setAdapter(adapter);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+        Toast.makeText(this, mEventMapList.get(i).get(KEY_NAME),Toast.LENGTH_LONG).show();
+    }
 }
