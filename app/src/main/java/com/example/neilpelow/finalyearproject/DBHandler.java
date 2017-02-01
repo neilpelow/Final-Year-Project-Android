@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 /**
  * Created by neilpelow on 22/12/2016.
@@ -31,14 +32,14 @@ public class DBHandler extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String CREATE_EVENTS_TABLE = "CREATE TABLE" + TABLE_EVENTS
+        String CREATE_EVENTS_TABLE = "CREATE TABLE " + TABLE_EVENTS
                 + "("
-                + KEY_ID + "INTEGER PRIMARY KEY,"
-                + KEY_DESC + "TEXT,"
-                + KEY_NAME + "TEXT,"
-                + KEY_ADDR + "TEXT,"
-                + KEY_START + "TEXT,"
-                + KEY_RSVP + "TEXT"
+                + KEY_ID + " INTEGER PRIMARY KEY " + " UNIQUE, "
+                + KEY_DESC + " TEXT, "
+                + KEY_NAME + " TEXT, "
+                + KEY_ADDR + " TEXT, "
+                + KEY_START + " TEXT, "
+                + KEY_RSVP + " TEXT "
                 + ")";
         db.execSQL(CREATE_EVENTS_TABLE);
     }
@@ -55,6 +56,7 @@ public class DBHandler extends SQLiteOpenHelper {
     public void addEvent(Event event) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(KEY_ID, event.getId());              //Event ID primary key
         values.put(KEY_DESC, event.getDescription());   //Event description
         values.put(KEY_NAME, event.getName());          //Event name
         values.put(KEY_ADDR, event.getAddress());       //Event address
@@ -62,6 +64,8 @@ public class DBHandler extends SQLiteOpenHelper {
         values.put(KEY_RSVP, event.getRsvpStatus());    //Event RSVP status
         // Inserting row
         db.insert(TABLE_EVENTS, null, values);
+        String log = "Id: " + event.getId() + " ,Name: " + event.getName();
+        Log.d("DB",log);
         db.close();
     }
 

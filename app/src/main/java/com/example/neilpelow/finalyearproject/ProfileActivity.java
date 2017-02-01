@@ -1,5 +1,6 @@
 package com.example.neilpelow.finalyearproject;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
@@ -22,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static android.support.customtabs.CustomTabsIntent.KEY_ID;
+import static com.facebook.FacebookSdk.getApplicationContext;
 import static com.facebook.internal.FacebookRequestErrorClassification.KEY_NAME;
 import static java.util.Objects.isNull;
 
@@ -32,6 +35,8 @@ import static java.util.Objects.isNull;
 public class ProfileActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
     private ListView mListView;
     private List<HashMap<String, String>> mEventMapList = new ArrayList<>();
+    public ArrayList<Event> eventList = new ArrayList<>();
+    private DBHandler myDbHandler = new DBHandler(this);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -49,12 +54,11 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
                 GraphResponse response = (GraphResponse) data;
                 String stringResponse = response.getRawResponse();
                 JSONObject json = new JSONObject(stringResponse);
-                //TODO: Parse response String into event list to be passed to onLoaded method.
                 try {
                     JSONObject eventJSONObject = json.getJSONObject("events");
                     JSONArray dataJSONArray = eventJSONObject.getJSONArray("data");
 
-                    List<Event> eventList = new ArrayList<Event>();
+                    //List<Event> eventList = new ArrayList<Event>();
 
                     for(int i = 0; i < dataJSONArray.length(); i++){
                         JSONObject event = dataJSONArray.getJSONObject(i);
@@ -73,13 +77,14 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
 
 
 
-    public void onLoaded(List<Event> eventList) {
+    public void onLoaded(ArrayList<Event> eventList) {
 
         for (Event event : eventList) {
 
             HashMap<String, String> map = new HashMap<>();
 
             map.put(KEY_NAME, event.getName());
+            map.put(KEY_ID, event.getId());
 
             mEventMapList.add(map);
         }
@@ -95,18 +100,14 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
             }
 
             if(!event.isNull("id")) {
-                myEvent.id = event.getInt("id");
+                myEvent.id = event.getString("id");
             }
 
             if(!event.isNull("description")) {
                 myEvent.description = event.getString("description");
             }
 
-            if(!event.isNull("address")) {
-                myEvent.address = event.getString("address");
-            }
-
-            if(!event.isNull("startTime")) {
+            if(!event.isNull("start_time")) {
                 myEvent.startTime = event.getString("startTime");
             }
 
@@ -117,7 +118,12 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
             e.printStackTrace();
         }
 
+        saveEventToDb(myEvent);
         return myEvent;
+    }
+
+    private void saveEventToDb(Event event) {
+        myDbHandler.addEvent(event);
     }
 
 
@@ -133,6 +139,12 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-        Toast.makeText(this, mEventMapList.get(i).get(KEY_NAME),Toast.LENGTH_LONG).show();
+        Toast.makeText(this, mEventMapList.get(i).get(KEY_ID),Toast.LENGTH_LONG).show();
+
+
+        Intent intent = new Intent(getApplicationContext(), CreateActivity.class);
+        intent.putExtra("eventIdKey", mEventMapList.get(i).get(KEY_ID));
+        intent.putExtra("eventNameKey", mEventMapList.get(i).get(KEY_NAME));
+        startActivity(intent);
     }
 }

@@ -46,19 +46,4 @@ public class GraphApi {
         request.setParameters(parameters);
         request.executeAsync();
     }
-
-    public static void parseJSONArray(GraphResponse response) throws JSONException {
-        String str = response.getRawResponse();
-        JSONArray jsonArray = new JSONArray(str);
-
-        for(int i =0; i < jsonArray.length(); i ++) {
-            JSONObject jsonObject = jsonArray.getJSONObject(i);
-            String desc = jsonObject.getString("description");
-            String endTime = jsonObject.getString("end_time");
-            String name = jsonObject.getString("name");
-            String place = jsonObject.getString("place");
-            String id = jsonObject.getString("id");
-            String rsvp = jsonObject.getString("rsvp_status");
-        }
-    }
 }

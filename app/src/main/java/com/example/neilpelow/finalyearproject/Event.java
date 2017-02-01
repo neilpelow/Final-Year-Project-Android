@@ -5,7 +5,7 @@ package com.example.neilpelow.finalyearproject;
  */
 
 public class Event {
-    public int id;
+    public String id;
     public String description;
     public String name;
     public String address;
@@ -16,7 +16,7 @@ public class Event {
 
     }
 
-    public Event(int id, String description, String name, String address, String startTime, String rsvpStatus) {
+    public Event(String id, String description, String name, String address, String startTime, String rsvpStatus) {
         this.id = id;
         this.description = description;
         this.name = name;
@@ -25,7 +25,7 @@ public class Event {
         this.rsvpStatus = rsvpStatus;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
