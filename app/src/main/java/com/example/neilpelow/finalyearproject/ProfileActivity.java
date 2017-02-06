@@ -19,7 +19,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
@@ -63,8 +66,11 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
                     for(int i = 0; i < dataJSONArray.length(); i++){
                         JSONObject event = dataJSONArray.getJSONObject(i);
                         Event myEvent = new Event();
-                        createEventList(event, myEvent);
-                        eventList.add(myEvent);
+                        myEvent = createEventList(event, myEvent);
+                        //If event is upcoming add to eventList.
+                        if(checkIfUpcomingEvent(myEvent)) {
+                            eventList.add(myEvent);
+                        }
                     }
                     onLoaded(eventList);
 
@@ -92,6 +98,40 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
         loadListView();
     }
 
+    //Method returns true if the start datetime of an event is after the current datetime.
+    private boolean checkIfUpcomingEvent(Event event){
+        String startTime = event.getStartTime();
+        if(!(startTime == null)){
+
+            //Get and format Event start time.
+            startTime = startTime.replaceAll("[^\\d.]", "");
+            startTime = removeTrailingChars(startTime);
+            long numStartTime = Long.parseLong(startTime);
+            
+            //Get and format current time.
+            Calendar c = Calendar.getInstance();
+            DateFormat dateformat = new SimpleDateFormat("yyyyMMddHHmm");
+            String datetime = dateformat.format(c.getTime());
+            long numDateTime = Long.parseLong(datetime);
+
+            if(numStartTime > numDateTime){
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
+    //Returns datetime string accurate to the nearest minute.
+    public String removeTrailingChars(String str) {
+        if (str != null && str.length() > 0) {
+            str = str.substring(0, str.length()-6);
+        }
+        return str;
+    }
+
     private Event createEventList (JSONObject event, Event myEvent) {
             //Get event object values
         try {
@@ -108,7 +148,7 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
             }
 
             if(!event.isNull("start_time")) {
-                myEvent.startTime = event.getString("startTime");
+                myEvent.startTime = event.getString("start_time");
             }
 
             if(!event.isNull("rsvpStatus")) {
@@ -118,6 +158,7 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
             e.printStackTrace();
         }
 
+        //Always save Event to Db even if it is an old event which will not be shown in list view.
         saveEventToDb(myEvent);
         return myEvent;
     }

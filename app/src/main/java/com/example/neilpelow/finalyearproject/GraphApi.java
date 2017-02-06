@@ -33,11 +33,6 @@ public class GraphApi {
                         Log.d("Graph","Profile info successfully collected");
                         Log.d("Graph",response.getRawResponse());
                         Log.d("Graph",response.getRequest().toString());
-                        //try {
-                        //    parseJSONArray(response);
-                        //} catch (JSONException e) {
-                        //    e.printStackTrace();
-                        //}
                     }
                 });
 

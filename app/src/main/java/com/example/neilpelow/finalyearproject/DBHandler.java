@@ -69,4 +69,16 @@ public class DBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public Event retrieveEvent(String id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Event event = new Event();
+        String query = "SELECT * FROM TABLE_EVENTS WHERE " +  " EQUALS "
+                + id
+                + ";";
+        db.execSQL(query);
+
+
+        return event;
+    }
+
 }
