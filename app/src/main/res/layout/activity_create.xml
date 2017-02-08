@@ -10,22 +10,38 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.example.neilpelow.finalyearproject.CreateActivity">
 
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:text="Name"
+        android:ems="10"
+        android:layout_below="@+id/eventIdTextView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="17dp"
+        android:id="@+id/editTextName" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:ems="10"
+        android:layout_below="@+id/editTextName"
+        android:layout_alignRight="@+id/editTextName"
+        android:layout_alignEnd="@+id/editTextName"
+        android:id="@+id/editTextStartTime"
+        android:text="Start Time" />
+
     <TextView
         android:text="Event ID"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/eventIdTextView"
+        android:layout_marginTop="9dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="34dp" />
-
-    <TextView
-        android:text="TextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/eventNameTextView" />
+        android:layout_marginLeft="12dp"
+        android:layout_marginStart="12dp" />
 </RelativeLayout>

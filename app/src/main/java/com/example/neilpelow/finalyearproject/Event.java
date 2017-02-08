@@ -12,7 +12,7 @@ public class Event {
     public String startTime;
     public String rsvpStatus;
 
-    public Event() {;
+    public Event() {
 
     }
 

@@ -12,8 +12,8 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
 import com.facebook.GraphResponse;
-import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,20 +26,22 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
-import static android.support.customtabs.CustomTabsIntent.KEY_ID;
-import static com.facebook.FacebookSdk.getApplicationContext;
-import static com.facebook.internal.FacebookRequestErrorClassification.KEY_NAME;
-import static java.util.Objects.isNull;
 
 /*
  * Created by neilpelow on 08/11/2016.
  */
+
+//TODO: Get json for event venues and load into objects for storage in Db.
 
 public class ProfileActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
     private ListView mListView;
     private List<HashMap<String, String>> mEventMapList = new ArrayList<>();
     public ArrayList<Event> eventList = new ArrayList<>();
     private DBHandler myDbHandler = new DBHandler(this);
+    private String idKey = "KEY_ID";
+    private String nameKey = "KEY_NAME";
+    private String startTimeKey = "KEY_STARTTIME";
+    private String rsvpKey = "KEY_RSVP";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,6 +50,8 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
 
         mListView = (ListView) findViewById(R.id.list_view);
         mListView.setOnItemClickListener(this);
+
+        AccessToken at =AccessToken.getCurrentAccessToken();
 
         LoadJSON j = new LoadJSON();
         j.loadJSON(new Callback() {
@@ -89,8 +93,10 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
 
             HashMap<String, String> map = new HashMap<>();
 
-            map.put(KEY_NAME, event.getName());
-            map.put(KEY_ID, event.getId());
+            map.put(nameKey, event.getName());
+            map.put(idKey, event.getId());
+            map.put(startTimeKey, event.getStartTime());
+            map.put(rsvpKey, event.getRsvpStatus());
 
             mEventMapList.add(map);
         }
@@ -167,11 +173,15 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
         myDbHandler.addEvent(event);
     }
 
+    private void saveVenueToDb(Venue venue) {
+        myDbHandler.addVenue(venue);
+    }
+
 
     private void loadListView() {
 
         ListAdapter adapter = new SimpleAdapter(ProfileActivity.this, mEventMapList, R.layout.list_item,
-                new String[] {KEY_NAME},
+                new String[] {nameKey},
                 new int[] {R.id.name});
 
         mListView.setAdapter(adapter);
@@ -180,12 +190,14 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
-        Toast.makeText(this, mEventMapList.get(i).get(KEY_ID),Toast.LENGTH_LONG).show();
+        Toast.makeText(this, mEventMapList.get(i).get(idKey),Toast.LENGTH_LONG).show();
 
 
         Intent intent = new Intent(getApplicationContext(), CreateActivity.class);
-        intent.putExtra("eventIdKey", mEventMapList.get(i).get(KEY_ID));
-        intent.putExtra("eventNameKey", mEventMapList.get(i).get(KEY_NAME));
+        intent.putExtra("eventIdKey", mEventMapList.get(i).get(idKey));
+        intent.putExtra("eventNameKey", mEventMapList.get(i).get(nameKey));
+        intent.putExtra("eventStartTimeKey", mEventMapList.get(i).get(startTimeKey));
+        intent.putExtra("eventRSVPKey", mEventMapList.get(i).get(rsvpKey));
         startActivity(intent);
     }
 }

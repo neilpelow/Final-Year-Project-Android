@@ -18,6 +18,8 @@ public class DBHandler extends SQLiteOpenHelper {
 
     private static final String TABLE_EVENTS = "events";
 
+    private static final String TABLE_VENUES = "venues";
+
     //Events Table column names
     private static final String KEY_ID = "id";
     private static final String KEY_DESC = "description";
@@ -25,6 +27,12 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String KEY_ADDR = "address";
     private static final String KEY_START = "startTime";
     private static final String KEY_RSVP = "rsvpStatus";
+
+    //Venues Table column names
+    private static final String KEY_VENUEID = "id";
+    private static final String KEY_VENUENAME = "name";
+    private static final String KEY_LONGITUDE = "longitude";
+    private static final String KEY_LATITUDE = "latitude";
 
     public DBHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -42,6 +50,15 @@ public class DBHandler extends SQLiteOpenHelper {
                 + KEY_RSVP + " TEXT "
                 + ")";
         db.execSQL(CREATE_EVENTS_TABLE);
+
+        String CREATE_VENUES_TABLE = "CREATE TABLE " + TABLE_VENUES
+                + "("
+                + KEY_VENUEID + " INTEGER PRIMARY KEY " + " UNIQUE, "
+                + KEY_VENUENAME + " TEXT, "
+                + KEY_LONGITUDE + " TEXT, "
+                + KEY_LATITUDE + " TEXT "
+                + ")";
+        db.execSQL(CREATE_VENUES_TABLE);
     }
 
     @Override
@@ -69,6 +86,20 @@ public class DBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void addVenue(Venue venue) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_VENUEID,venue.getId());
+        values.put(KEY_VENUENAME, venue.getName());
+        values.put(KEY_LONGITUDE, venue.getLongitude());
+        values.put(KEY_LATITUDE, venue.getLatitude());
+        // Inserting row
+        db.insert(TABLE_VENUES,null, values);
+        String log = "Id: " + venue.getId() + " Name: " + venue.getName();
+        Log.d("DB", log);
+        db.close();
+    }
+
     public Event retrieveEvent(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Event event = new Event();
@@ -79,6 +110,18 @@ public class DBHandler extends SQLiteOpenHelper {
 
 
         return event;
+    }
+
+    public Venue retrieveVenue(String id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Venue venue = new Venue();
+        String query = "SELECT * FROM TABLE_VENUES WHERE " +  " EQUALS "
+                + id
+                + ";";
+        db.execSQL(query);
+
+
+        return venue;
     }
 
 }
