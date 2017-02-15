@@ -100,7 +100,7 @@ public class MainFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         LoginButton loginButton = (LoginButton) view.findViewById(R.id.login_button);
-        loginButton.setReadPermissions(Arrays.asList("user_status","user_events"));
+        loginButton.setReadPermissions(Arrays.asList("user_status","user_events", "user_friends"));
         loginButton.setFragment(this);
         loginButton.registerCallback(mCallbackManager, mCallback);
 
@@ -110,7 +110,9 @@ public class MainFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(mCallbackManager.onActivityResult(requestCode,resultCode, data)){
+        // if you don't add following block,
+        // your registered `FacebookCallback` won't be called
+        if (mCallbackManager.onActivityResult(requestCode, resultCode, data)) {
             return;
         }
     }

@@ -6,6 +6,7 @@ import android.util.Log;
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.facebook.Profile;
 
 import org.json.JSONArray;
@@ -40,5 +41,21 @@ public class GraphApi {
         parameters.putString("fields", "name,events");
         request.setParameters(parameters);
         request.executeAsync();
+    }
+
+    public static void getFriendList(AccessToken accessToken) {
+        new GraphRequest(
+                accessToken,
+                "/{friend-list-id}",
+                null,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        //Handle result.
+                        String myResponse = response.toString();
+                        //Log.d("GraphApi", response.toString());
+                    }
+                }
+        ).executeAsync();
     }
 }

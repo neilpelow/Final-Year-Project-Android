@@ -20,6 +20,8 @@ public class DBHandler extends SQLiteOpenHelper {
 
     private static final String TABLE_VENUES = "venues";
 
+    private static final String TABLE_USERS = "users";
+
     //Events Table column names
     private static final String KEY_ID = "id";
     private static final String KEY_DESC = "description";
@@ -33,6 +35,9 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String KEY_VENUENAME = "name";
     private static final String KEY_LONGITUDE = "longitude";
     private static final String KEY_LATITUDE = "latitude";
+
+    //Users Table column names
+    private static final String KEY_USERID = "id";
 
     public DBHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -59,6 +64,13 @@ public class DBHandler extends SQLiteOpenHelper {
                 + KEY_LATITUDE + " TEXT "
                 + ")";
         db.execSQL(CREATE_VENUES_TABLE);
+
+        String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_USERS
+                + "("
+                + KEY_USERID + " INTEGER PRIMARY KEY " + " UNIQUE, "
+                + ")";
+        db.execSQL(CREATE_USERS_TABLE);
+
     }
 
     @Override
@@ -100,7 +112,7 @@ public class DBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
-    public Event retrieveEvent(String id) {
+    public Event retrieveAllEvents(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Event event = new Event();
         String query = "SELECT * FROM TABLE_EVENTS WHERE " +  " EQUALS "
@@ -112,7 +124,7 @@ public class DBHandler extends SQLiteOpenHelper {
         return event;
     }
 
-    public Venue retrieveVenue(String id) {
+    public Venue retrieveAllVenues(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Venue venue = new Venue();
         String query = "SELECT * FROM TABLE_VENUES WHERE " +  " EQUALS "

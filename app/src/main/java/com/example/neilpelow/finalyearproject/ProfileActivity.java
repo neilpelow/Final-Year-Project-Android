@@ -7,13 +7,16 @@ import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
+import com.facebook.FacebookSdk;
 import com.facebook.GraphResponse;
+import com.facebook.login.LoginManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,9 +37,10 @@ import java.util.List;
 //TODO: Get json for event venues and load into objects for storage in Db.
 
 public class ProfileActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
+    public ArrayList<Event> eventList = new ArrayList<>();
+    public Button logoutButton;
     private ListView mListView;
     private List<HashMap<String, String>> mEventMapList = new ArrayList<>();
-    public ArrayList<Event> eventList = new ArrayList<>();
     private DBHandler myDbHandler = new DBHandler(this);
     private String idKey = "KEY_ID";
     private String nameKey = "KEY_NAME";
@@ -46,12 +50,13 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FacebookSdk.sdkInitialize(getApplicationContext());
         setContentView(R.layout.activity_profile);
+
+        logoutButton = (Button) findViewById(R.id.logoutButton);
 
         mListView = (ListView) findViewById(R.id.list_view);
         mListView.setOnItemClickListener(this);
-
-        AccessToken at =AccessToken.getCurrentAccessToken();
 
         LoadJSON j = new LoadJSON();
         j.loadJSON(new Callback() {
@@ -83,6 +88,16 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
                 }
             }
         });
+
+        logoutButton.setOnClickListener( new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                LoginManager.getInstance().logOut();
+                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
 
@@ -102,6 +117,7 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
         }
 
         loadListView();
+        GraphApi.getFriendList(AccessToken.getCurrentAccessToken());
     }
 
     //Method returns true if the start datetime of an event is after the current datetime.
