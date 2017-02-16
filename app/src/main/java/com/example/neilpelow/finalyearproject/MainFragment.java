@@ -54,7 +54,7 @@ public class MainFragment extends Fragment {
                 GraphApi.getUserInformation();
             }
 
-            Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
             getActivity().finish();
         }
@@ -84,7 +84,7 @@ public class MainFragment extends Fragment {
         }
         if(Profile.getCurrentProfile() != null && AccessToken.getCurrentAccessToken() != null) {
             Log.d(TAG, "onCreate: User is already logged in");
-            Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
             getActivity().finish();
         }
@@ -122,7 +122,7 @@ public class MainFragment extends Fragment {
         super.onResume();
         if(Profile.getCurrentProfile() != null && AccessToken.getCurrentAccessToken() != null) {
             Log.d(TAG, "onCreate: User is already logged in");
-            Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
             getActivity().finish();
         }

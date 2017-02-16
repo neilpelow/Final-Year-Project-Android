@@ -1,32 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.SlidingPaneLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:weightSum="1">
 
+    <ImageButton
+        android:layout_width="44dp"
+        android:layout_height="30dp"
+        android:layout_gravity="right"
+        android:src="@drawable/ic_menu_black_24dp"
+        android:onClick="showPopup"
+        android:id="@+id/popupMenu"
+        android:layout_weight="0.02" />
+
     <ListView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.88"
-        android:id="@+id/list_view" />
+        android:layout_height="match_parent"
+        android:id="@+id/list_view"
+        android:layout_weight="0.62" />
 
-    <android.support.design.widget.FloatingActionButton
+    <!--<android.support.design.widget.FloatingActionButton-->
 
-        android:layout_gravity="bottom|end"
-        android:layout_width="98dp"
-        android:layout_height="0dp"
-        android:clickable="true"
-        app:fabSize="mini"
-        app:srcCompat="@android:drawable/ic_input_add"
-        android:id="@+id/floatingActionButton"
-        android:layout_weight="0.12"
-        android:layout_margin="28dp"/>
+        <!--android:layout_gravity="bottom|end"-->
+        <!--android:layout_width="98dp"-->
+        <!--android:layout_height="0dp"-->
+        <!--android:clickable="true"-->
+        <!--app:fabSize="mini"-->
+        <!--app:srcCompat="@android:drawable/ic_input_add"-->
+        <!--android:id="@+id/floatingActionButton"-->
+        <!--android:layout_weight="0.12"-->
+        <!--android:layout_margin="28dp"/>-->
 
-    <Button
-        android:text="Logout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/logoutButton" />
 
-</LinearLayout>
+
+</android.support.v4.widget.SlidingPaneLayout>

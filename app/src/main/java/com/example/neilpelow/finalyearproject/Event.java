@@ -1,5 +1,10 @@
 package com.example.neilpelow.finalyearproject;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+
 /**
  * Created by neilpelow on 15/11/2016.
  */
@@ -47,5 +52,34 @@ public class Event {
 
     public String getRsvpStatus() {
         return rsvpStatus;
+    }
+
+    public static Event createEventList (JSONObject event, Event myEvent) {
+        //Get event object values
+        try {
+            if(!event.isNull("name")) {
+                myEvent.name = event.getString("name");
+            }
+
+            if(!event.isNull("id")) {
+                myEvent.id = event.getString("id");
+            }
+
+            if(!event.isNull("description")) {
+                myEvent.description = event.getString("description");
+            }
+
+            if(!event.isNull("start_time")) {
+                myEvent.startTime = event.getString("start_time");
+            }
+
+            if(!event.isNull("rsvpStatus")) {
+                myEvent.rsvpStatus = event.getString("rsvpStatus");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return myEvent;
     }
 }
