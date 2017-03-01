@@ -2,7 +2,6 @@ package com.example.neilpelow.finalyearproject;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -12,13 +11,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
 
 import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
-import android.support.v7.widget.PopupMenu;
-import android.view.MenuInflater;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListAdapter;
@@ -51,7 +47,9 @@ public class MainActivity extends AppCompatActivity
     private List<HashMap<String, String>> mEventMapList = new ArrayList<>();
     private DBHandler myDbHandler = new DBHandler(this);
     private String idKey = "KEY_ID";
+    private String descKey = "KEY_DESC";
     private String nameKey = "KEY_NAME";
+    private String addressKey = "KEY_ADDRESS";
     private String startTimeKey = "KEY_STARTTIME";
     private String rsvpKey = "KEY_RSVP";
 
@@ -67,8 +65,8 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent(getApplicationContext(), CreateMeetUpActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -233,7 +231,9 @@ public class MainActivity extends AppCompatActivity
 
         Intent intent = new Intent(getApplicationContext(), CreateActivity.class);
         intent.putExtra("eventIdKey", mEventMapList.get(i).get(idKey));
+        intent.putExtra("eventDescKey", mEventMapList.get(i).get(descKey));
         intent.putExtra("eventNameKey", mEventMapList.get(i).get(nameKey));
+        intent.putExtra("eventAddressKey", mEventMapList.get(i).get(addressKey));
         intent.putExtra("eventStartTimeKey", mEventMapList.get(i).get(startTimeKey));
         intent.putExtra("eventRSVPKey", mEventMapList.get(i).get(rsvpKey));
         startActivity(intent);

@@ -41,8 +41,9 @@
             android:name=".SignupActivity"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".ProfileActivity"
-            android:theme="@style/AppTheme" />
+            android:name=".CreateMeetUpActivity"
+            android:theme="@style/AppTheme"
+            android:label="Create Meet Up"/>
 
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.

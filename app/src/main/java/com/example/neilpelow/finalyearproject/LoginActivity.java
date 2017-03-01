@@ -58,7 +58,7 @@ public class LoginActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         /*
-        Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+        Intent intent = new Intent(getApplicationContext(), CreateMeetUpActivity.class);
         startActivity(intent);
         finish();
         */
@@ -123,7 +123,7 @@ public class LoginActivity extends AppCompatActivity {
         _loginButton.setEnabled(true);
         Toast.makeText(getBaseContext(), "Login validation passed", Toast.LENGTH_LONG).show();
         //Open new activity
-        Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
+        Intent intent = new Intent(getApplicationContext(), CreateMeetUpActivity.class);
         startActivity(intent);
         finish(); //End main activity so user cannot navigate back using back button.
     }

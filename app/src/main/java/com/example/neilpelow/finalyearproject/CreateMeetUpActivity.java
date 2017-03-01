@@ -40,14 +40,16 @@ import java.util.List;
 
 //TODO: Get json for event venues and load into objects for storage in Db.
 
-public class ProfileActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, PopupMenu.OnMenuItemClickListener {
+public class CreateMeetUpActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     public ArrayList<Event> eventList = new ArrayList<>();
     public Button logoutButton;
     private ListView mListView;
     private List<HashMap<String, String>> mEventMapList = new ArrayList<>();
     private DBHandler myDbHandler = new DBHandler(this);
     private String idKey = "KEY_ID";
+    private String descKey = "KEY_DESC";
     private String nameKey = "KEY_NAME";
+    private String addressKey = "KEY_ADDRESS";
     private String startTimeKey = "KEY_STARTTIME";
     private String rsvpKey = "KEY_RSVP";
 
@@ -56,7 +58,7 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_profile);
+        setContentView(R.layout.activity_create_meet_up);
 
         logoutButton = (Button) findViewById(R.id.logoutButton);
 
@@ -95,14 +97,6 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
         });
 
 
-    }
-
-    public void showPopup(View view) {
-        PopupMenu popup = new PopupMenu(this, view);
-        popup.setOnMenuItemClickListener(this);
-        MenuInflater inflater = popup.getMenuInflater();
-        inflater.inflate(R.menu.popup_menu_items, popup.getMenu());
-        popup.show();
     }
 
     public void onLoaded(ArrayList<Event> eventList) {
@@ -199,7 +193,7 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
 
     private void loadListView() {
 
-        ListAdapter adapter = new SimpleAdapter(ProfileActivity.this, mEventMapList, R.layout.list_item,
+        ListAdapter adapter = new SimpleAdapter(CreateMeetUpActivity.this, mEventMapList, R.layout.list_item,
                 new String[] {nameKey},
                 new int[] {R.id.name});
 
@@ -220,20 +214,11 @@ public class ProfileActivity extends AppCompatActivity implements AdapterView.On
 
         Intent intent = new Intent(getApplicationContext(), CreateActivity.class);
         intent.putExtra("eventIdKey", mEventMapList.get(i).get(idKey));
+        intent.putExtra("eventDescKey", mEventMapList.get(i).get(descKey));
         intent.putExtra("eventNameKey", mEventMapList.get(i).get(nameKey));
+        intent.putExtra("eventAddressKey", mEventMapList.get(i).get(addressKey));
         intent.putExtra("eventStartTimeKey", mEventMapList.get(i).get(startTimeKey));
         intent.putExtra("eventRSVPKey", mEventMapList.get(i).get(rsvpKey));
         startActivity(intent);
-    }
-
-    @Override
-    public boolean onMenuItemClick(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.logoutButton:
-                logout();
-                return true;
-            default:
-                return false;
-        }
     }
 }

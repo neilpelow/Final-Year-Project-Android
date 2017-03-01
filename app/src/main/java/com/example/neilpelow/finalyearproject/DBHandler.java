@@ -3,6 +3,7 @@ package com.example.neilpelow.finalyearproject;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
@@ -12,11 +13,13 @@ import android.util.Log;
 
 public class DBHandler extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     private static final String DATABASE_NAME = "eventsDb";
 
     private static final String TABLE_EVENTS = "events";
+
+    private static final String TABLE_MEETUPS = "meetups";
 
     private static final String TABLE_VENUES = "venues";
 
@@ -43,6 +46,8 @@ public class DBHandler extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    //------------------------------------CREATE STATEMENTS-------------------------------------//
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_EVENTS_TABLE = "CREATE TABLE " + TABLE_EVENTS
@@ -54,7 +59,27 @@ public class DBHandler extends SQLiteOpenHelper {
                 + KEY_START + " TEXT, "
                 + KEY_RSVP + " TEXT "
                 + ")";
-        db.execSQL(CREATE_EVENTS_TABLE);
+        try {
+            db.execSQL(CREATE_EVENTS_TABLE);
+        } catch (SQLiteException e) {
+            Log.d("DB", "Events table already exists");
+        }
+
+
+        String CREATE_MEETUP_TABLE = "CREATE TABLE " + TABLE_MEETUPS
+                + "("
+                + KEY_ID + " INTEGER PRIMARY KEY " + " UNIQUE, "
+                + KEY_DESC + " TEXT, "
+                + KEY_NAME + " TEXT, "
+                + KEY_ADDR + " TEXT, "
+                + KEY_START + " TEXT, "
+                + KEY_RSVP + " TEXT "
+                + ")";
+        try {
+            db.execSQL(CREATE_MEETUP_TABLE);
+        } catch (SQLiteException e) {
+            Log.d("DB", "Meet Ups table already exists");
+        }
 
         String CREATE_VENUES_TABLE = "CREATE TABLE " + TABLE_VENUES
                 + "("
@@ -63,25 +88,35 @@ public class DBHandler extends SQLiteOpenHelper {
                 + KEY_LONGITUDE + " TEXT, "
                 + KEY_LATITUDE + " TEXT "
                 + ")";
-        db.execSQL(CREATE_VENUES_TABLE);
+        try {
+            db.execSQL(CREATE_VENUES_TABLE);
+        } catch (SQLiteException e) {
+            Log.d("DB", "Venues table already exists");
+        }
 
         String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_USERS
                 + "("
                 + KEY_USERID + " INTEGER PRIMARY KEY " + " UNIQUE, "
                 + ")";
-        db.execSQL(CREATE_USERS_TABLE);
+        try {
+            db.execSQL(CREATE_USERS_TABLE);
+        } catch (SQLiteException e) {
+            Log.d("DB", "Users table already exists");
+        }
 
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Drop older table if existed
-        db.execSQL("DROP TABLE IF EXISTS" + TABLE_EVENTS);
+        //Not sure if I really want to do this...
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENTS + TABLE_MEETUPS + TABLE_VENUES + TABLE_USERS + ";");
         // Creating tables again
         onCreate(db);
     }
 
-    //Inserting Event data into Db
+    //------------------------------------INSERT STATEMENTS-------------------------------------//
+
     public void addEvent(Event event) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -98,6 +133,22 @@ public class DBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void addMeetup(Meetup meetup) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_ID, meetup.getId());
+        values.put(KEY_DESC, meetup.getDescription());
+        values.put(KEY_NAME, meetup.getName());
+        values.put(KEY_ADDR, meetup.getAddress());
+        values.put(KEY_START, meetup.getStartTime());
+        values.put(KEY_RSVP, meetup.getRsvpStatus());
+        // Inserting row
+        db.insert(TABLE_MEETUPS, null, values);
+        String log = "Id: " + meetup.getId() + " ,Name: " + meetup.getName();
+        Log.d("DB Meet Up",log);
+        db.close();
+    }
+
     public void addVenue(Venue venue) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -111,6 +162,9 @@ public class DBHandler extends SQLiteOpenHelper {
         Log.d("DB", log);
         db.close();
     }
+
+
+    //------------------------------------SELECT STATEMENTS-------------------------------------//
 
     public Event retrieveAllEvents(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
