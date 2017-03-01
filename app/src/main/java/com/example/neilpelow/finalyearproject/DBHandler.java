@@ -13,7 +13,7 @@ import android.util.Log;
 
 public class DBHandler extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     private static final String DATABASE_NAME = "eventsDb";
 
@@ -41,13 +41,13 @@ public class DBHandler extends SQLiteOpenHelper {
 
     //Users Table column names
     private static final String KEY_USERID = "id";
+    private static final String KEY_USERNAME = "username";
 
     public DBHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     //------------------------------------CREATE STATEMENTS-------------------------------------//
-
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_EVENTS_TABLE = "CREATE TABLE " + TABLE_EVENTS
@@ -97,6 +97,7 @@ public class DBHandler extends SQLiteOpenHelper {
         String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_USERS
                 + "("
                 + KEY_USERID + " INTEGER PRIMARY KEY " + " UNIQUE, "
+                + KEY_USERNAME + " TEXT, "
                 + ")";
         try {
             db.execSQL(CREATE_USERS_TABLE);
@@ -110,13 +111,13 @@ public class DBHandler extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Drop older table if existed
         //Not sure if I really want to do this...
+        //Turns out I do want to. Good Good :)
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENTS + TABLE_MEETUPS + TABLE_VENUES + TABLE_USERS + ";");
         // Creating tables again
         onCreate(db);
     }
 
     //------------------------------------INSERT STATEMENTS-------------------------------------//
-
     public void addEvent(Event event) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -163,9 +164,20 @@ public class DBHandler extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void addUser(User user) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_USERID,user.getUserId());
+        values.put(KEY_USERNAME, user.getName());
+        // Inserting row
+        db.insert(TABLE_USERS,null, values);
+        String log = "Id: " + user.getUserId() + " Name: " + user.getName();
+        Log.d("DB", log);
+        db.close();
+    }
+
 
     //------------------------------------SELECT STATEMENTS-------------------------------------//
-
     public Event retrieveAllEvents(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Event event = new Event();

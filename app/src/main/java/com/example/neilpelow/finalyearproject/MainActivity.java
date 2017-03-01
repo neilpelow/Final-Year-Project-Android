@@ -1,7 +1,15 @@
 package com.example.neilpelow.finalyearproject;
 
+import android.*;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -26,26 +34,59 @@ import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.Api;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.drive.Drive;
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, AdapterView.OnItemClickListener{
+        implements NavigationView.OnNavigationItemSelectedListener, AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks {
 
     public ArrayList<Event> eventList = new ArrayList<>();
     public Button logoutButton;
+    public Location mLastLocation;
+
     private ListView mListView;
     private List<HashMap<String, String>> mEventMapList = new ArrayList<>();
+
+
     private DBHandler myDbHandler = new DBHandler(this);
+
+    /**
+     * ATTENTION: This "addApi(AppIndex.API)" was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(this)
+            .enableAutoManage(this /* FragmentActivity */,
+                    (GoogleApiClient.OnConnectionFailedListener) this /* OnConnectionFailedListener */)
+            .addApi(Drive.API)
+            .addScope(Drive.SCOPE_FILE)
+            .addApi(AppIndex.API).build();
+
+
+
     private String idKey = "KEY_ID";
     private String descKey = "KEY_DESC";
     private String nameKey = "KEY_NAME";
@@ -114,6 +155,46 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener((GoogleApiClient.OnConnectionFailedListener) this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+    }
+
+    //Build request URL with params.
+    String latitude = getLatitude(mLastLocation);
+    String longitude = getLongitude(mLastLocation);
+    //String distance = MainActivity.getDistance();
+
+    String latitudeUrl = "lat=" + latitude +"&";
+    String longitudeUrl = "lat=" + longitude + "&";
+    //String distanceUrl =  "distance" + distance +"&";
+    String accessTokenUrl = "accessToken=" + AccessToken.getCurrentAccessToken();
+
+    public String getLatitude(Location location) {
+        String latitude = String.valueOf(location.getLatitude());
+        return latitude;
+    }
+
+    public String getLongitude(Location location) {
+        String longitude = String.valueOf(location.getLongitude());
+        return longitude;
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        if( ContextCompat.checkSelfPermission( this, Manifest.permission.ACCESS_COARSE_LOCATION ) != PackageManager.PERMISSION_GRANTED ){
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
     }
 
     public void onLoaded(ArrayList<Event> eventList) {
@@ -131,7 +212,6 @@ public class MainActivity extends AppCompatActivity
         }
 
         loadListView();
-        GraphApi.getFriendList(AccessToken.getCurrentAccessToken());
     }
 
     //Method returns true if the start datetime of an event is after the current datetime.
@@ -295,5 +375,41 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    public Action getIndexApiAction() {
+        Thing object = new Thing.Builder()
+                .setName("Main Page") // TODO: Define a title for the content shown.
+                // TODO: Make sure this auto-generated URL is correct.
+                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
+                .build();
+        return new Action.Builder(Action.TYPE_VIEW)
+                .setObject(object)
+                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
+                .build();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        mGoogleApiClient.connect();
+        AppIndex.AppIndexApi.start(mGoogleApiClient, getIndexApiAction());
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        AppIndex.AppIndexApi.end(mGoogleApiClient, getIndexApiAction());
+        mGoogleApiClient.disconnect();
     }
 }

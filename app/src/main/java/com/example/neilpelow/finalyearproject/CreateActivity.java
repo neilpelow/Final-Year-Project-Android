@@ -9,6 +9,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.facebook.AccessToken;
+import com.facebook.GraphResponse;
+
 import static android.support.customtabs.CustomTabsIntent.KEY_ID;
 import static com.example.neilpelow.finalyearproject.R.id.button;
 
@@ -57,6 +60,9 @@ public class CreateActivity extends Activity {
         event.address = unpackExtra(eventAddressString);
         event.startTime = unpackExtra(eventStartTimeString);
         event.rsvpStatus = unpackExtra(eventRSVPString);
+
+        //Testing
+        GraphApi.getFriendsAttendingEvent(AccessToken.getCurrentAccessToken(), event);
 
         //Create Meet up and populate with fields from Event
         Meetup meetup = new Meetup();

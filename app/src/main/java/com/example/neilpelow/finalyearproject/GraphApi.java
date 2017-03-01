@@ -44,18 +44,53 @@ public class GraphApi {
     }
 
     public static void getFriendList(AccessToken accessToken) {
-        new GraphRequest(
+        Profile profile = Profile.getCurrentProfile();
+        String userId = profile.getId();
+        GraphRequest request = GraphRequest.newGraphPathRequest(
                 accessToken,
-                "/{friend-list-id}",
-                null,
-                HttpMethod.GET,
+                "/"
+                        + userId
+                        + "/friends",
                 new GraphRequest.Callback() {
+                    @Override
                     public void onCompleted(GraphResponse response) {
-                        //Handle result.
+                        //Log user information
                         String myResponse = response.toString();
-                        //Log.d("GraphApi", response.toString());
+                        Log.d("Graph", "Friend list info successfully collected");
+                        Log.d("Graph", response.getRawResponse());
+                        Log.d("Graph", response.getRequest().toString());
                     }
-                }
-        ).executeAsync();
+                });
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "name,events,user_friends");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
+    public static void getFriendsAttendingEvent(AccessToken accessToken, Event event) {
+        String eventId = event.getId();
+        GraphRequest request = GraphRequest.newGraphPathRequest(
+                accessToken,
+                "/"
+                        + eventId
+                        + "/attending",
+                new GraphRequest.Callback() {
+                    @Override
+                    public void onCompleted(GraphResponse response) {
+                        //Log user information
+                        String myResponse = response.toString();
+                        Log.d("Graph", "Event attendees info successfully collected");
+                        Log.d("Graph", response.getRawResponse());
+                        Log.d("Graph", response.getRequest().toString());
+
+                        GraphRequest nextResultsRequests = response.getRequestForPagedResults(GraphResponse.PagingDirection.NEXT);
+                    }
+                });
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "name,events,user_friends");
+        request.setParameters(parameters);
+        request.executeAsync();
     }
 }
