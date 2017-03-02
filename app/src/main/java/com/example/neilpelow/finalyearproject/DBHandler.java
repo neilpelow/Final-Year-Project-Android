@@ -2,10 +2,13 @@ package com.example.neilpelow.finalyearproject;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
+
+import java.util.ArrayList;
 
 /**
  * Created by neilpelow on 22/12/2016.
@@ -189,6 +192,55 @@ public class DBHandler extends SQLiteOpenHelper {
 
         return event;
     }
+
+    public ArrayList<Meetup> getAllMeetups()
+    {
+        // Select All Query
+        String selectQuery = "SELECT * FROM " + TABLE_MEETUPS;
+        // Get the instance of the database
+        SQLiteDatabase db = this.getWritableDatabase();
+        //get the cursor you're going to use
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        //this is optional - if you want to return one object
+        //you don't need a list
+        ArrayList<Meetup> meetupList = new ArrayList<Meetup>();
+
+        //you should always use the try catch statement incase
+        //something goes wrong when trying to read the data
+        try
+        {
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    //the .getString(int x) method of the cursor returns the column
+                    //of the table your query returned
+                    Meetup meetup= new Meetup(cursor.getString(0),
+                            cursor.getString(1),
+                            cursor.getString(2),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getString(5)
+                            );
+                    // Adding contact to list
+                    meetupList.add(meetup);
+                } while (cursor.moveToNext());
+            }
+        }
+        catch (SQLiteException e)
+        {
+            Log.d("SQL Error", e.getMessage());
+            return null;
+        }
+        finally
+        {
+            //release all your resources
+            cursor.close();
+            db.close();
+        }
+        return meetupList;
+    }
+
 
     public Venue retrieveAllVenues(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
