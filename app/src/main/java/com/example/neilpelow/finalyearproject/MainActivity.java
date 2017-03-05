@@ -1,7 +1,18 @@
 package com.example.neilpelow.finalyearproject;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.location.LocationProvider;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -29,9 +40,8 @@ import java.util.HashMap;
 import java.util.List;
 
 
-
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, AdapterView.OnItemClickListener {
+        implements NavigationView.OnNavigationItemSelectedListener, AdapterView.OnItemClickListener, LocationListener {
 
     public ArrayList<Meetup> meetupList = new ArrayList<>();
     public Button logoutButton;
@@ -40,6 +50,7 @@ public class MainActivity extends AppCompatActivity
     private List<HashMap<String, String>> mMeetupMapList = new ArrayList<>();
 
     private DBHandler myDbHandler = new DBHandler(this);
+    private LocationManager locationManager;
 
     private String idKey = "KEY_ID";
     private String descKey = "KEY_DESC";
@@ -47,6 +58,7 @@ public class MainActivity extends AppCompatActivity
     private String addressKey = "KEY_ADDRESS";
     private String startTimeKey = "KEY_STARTTIME";
     private String rsvpKey = "KEY_RSVP";
+    static final Integer LOCATION = 0x1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +93,51 @@ public class MainActivity extends AppCompatActivity
 
         meetupList = myDbHandler.getAllMeetups();
         onLoaded(meetupList);
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        getLocation(locationManager);
 
+
+    }
+
+    private void askForPermission(String permission, Integer requestCode) {
+        if (ContextCompat.checkSelfPermission(MainActivity.this, permission) != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, permission)) {
+
+                //This is called if user has denied the permission before
+                //In this case I am just asking the permission again
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, requestCode);
+
+            } else {
+
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{permission}, requestCode);
+            }
+        } else {
+            Toast.makeText(this, "" + permission + " is already granted.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public Location getLocation(LocationManager locationManager) {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            //ActivityCompat.requestPermissions(thisActivity,
+                    //new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    //MY_PERMISSIONS_ACCESS_FINE_LOCATIONS);
+            askForPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, LOCATION);
+
+        }
+        String locationProvider = LocationManager.GPS_PROVIDER;
+        // Or use LocationManager.GPS_PROVIDER
+
+        Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+        return  lastKnownLocation;
     }
 
     public void onLoaded(ArrayList<Meetup> meetupList) {
@@ -130,6 +186,37 @@ public class MainActivity extends AppCompatActivity
         intent.putExtra("eventStartTimeKey", mMeetupMapList.get(i).get(startTimeKey));
         intent.putExtra("eventRSVPKey", mMeetupMapList.get(i).get(rsvpKey));
         startActivity(intent);
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+        Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        startActivity(intent);
+        Toast.makeText(getBaseContext(), "Location Services disabled",
+                Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+        Toast.makeText(getBaseContext(), "Location Services enabled",
+                Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+        String msg = "New Latitude: " + location.getLatitude()
+                + "New Longitude: " + location.getLongitude();
+
+        Toast.makeText(getBaseContext(), msg, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+        // TODO Auto-generated method stub
+
     }
 
     @Override
