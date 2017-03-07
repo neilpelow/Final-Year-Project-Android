@@ -13,6 +13,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -31,13 +32,31 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.androidnetworking.AndroidNetworking;
+import com.androidnetworking.common.Priority;
+import com.androidnetworking.error.ANError;
+import com.androidnetworking.interfaces.JSONArrayRequestListener;
+import com.androidnetworking.interfaces.JSONObjectRequestListener;
+import com.androidnetworking.interfaces.ParsedRequestListener;
 import com.facebook.FacebookSdk;
 import com.facebook.login.LoginManager;
+import com.google.gson.JsonArray;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
 import java.util.HashMap;
 import java.util.List;
+
+import static com.example.neilpelow.finalyearproject.Event.createEventList;
 
 
 public class MainActivity extends AppCompatActivity
@@ -58,12 +77,14 @@ public class MainActivity extends AppCompatActivity
     private String addressKey = "KEY_ADDRESS";
     private String startTimeKey = "KEY_STARTTIME";
     private String rsvpKey = "KEY_RSVP";
+
     static final Integer LOCATION = 0x1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
+        AndroidNetworking.initialize(getApplicationContext());
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -93,8 +114,21 @@ public class MainActivity extends AppCompatActivity
 
         meetupList = myDbHandler.getAllMeetups();
         onLoaded(meetupList);
+
+        //Get params for
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        getLocation(locationManager);
+        Location myLocation = getLocation(locationManager);
+        double lat = myLocation.getLatitude();
+        double lng = myLocation.getLongitude();
+        //Params
+        String latitude = Double.toString(lat);
+        String longitude = Double.toString(lng);
+        //Hard Code for now
+        String distance = "500";
+        String accessToken = GraphApi.getAccessToken();
+        accessToken = accessToken.substring(19,241);
+
+        sendRequest(latitude, longitude, distance, accessToken);
 
 
     }
@@ -102,7 +136,6 @@ public class MainActivity extends AppCompatActivity
     private void askForPermission(String permission, Integer requestCode) {
         if (ContextCompat.checkSelfPermission(MainActivity.this, permission) != PackageManager.PERMISSION_GRANTED) {
 
-            // Should we show an explanation?
             if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, permission)) {
 
                 //This is called if user has denied the permission before
@@ -118,23 +151,13 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
     public Location getLocation(LocationManager locationManager) {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            //ActivityCompat.requestPermissions(thisActivity,
-                    //new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    //MY_PERMISSIONS_ACCESS_FINE_LOCATIONS);
             askForPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, LOCATION);
-
         }
         String locationProvider = LocationManager.GPS_PROVIDER;
-        // Or use LocationManager.GPS_PROVIDER
+        // Or use LocationManager.NETWORK_PROVIDER
 
         Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
         return  lastKnownLocation;
@@ -166,12 +189,80 @@ public class MainActivity extends AppCompatActivity
         mListView.setAdapter(adapter);
     }
 
+    public void sendRequest(String latitude, String longitude, String distance, String accessToken) {
+        AndroidNetworking.get("http://46.101.31.182:3000/events")
+                .addQueryParameter("lat", latitude)
+                .addQueryParameter("lng", longitude)
+                .addQueryParameter("distance",distance)
+                .addQueryParameter("accessToken", accessToken)
+                .setTag(this)
+                .setPriority(Priority.LOW)
+                .build()
+                .getAsJSONObject(new JSONObjectRequestListener() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // do anything with response
+                        Log.d("Event", response.toString());
+                        try {
+                            JSONArray dataJSONArray = response.getJSONArray("events");
+
+                            for(int i = 0; i < dataJSONArray.length(); i++){
+                                JSONObject event = dataJSONArray.getJSONObject(i);
+                                Event myEvent = new Event();
+                                createEventObject(event, myEvent);
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    @Override
+                    public void onError(ANError error) {
+                        // handle error
+                        Log.d("Event", error.toString());
+                    }
+                });
+    }
+
+    private void createEventObject (JSONObject event, Event myEvent) {
+        //Get event object values
+        try {
+            if(!event.isNull("name")) {
+                myEvent.name = event.getString("name");
+            }
+
+            if(!event.isNull("id")) {
+                myEvent.id = event.getString("id");
+            }
+
+            if(!event.isNull("description")) {
+                myEvent.description = event.getString("description");
+            }
+
+            if(!event.isNull("start_time")) {
+                myEvent.startTime = event.getString("start_time");
+            }
+
+            if(!event.isNull("rsvpStatus")) {
+                myEvent.rsvpStatus = event.getString("rsvpStatus");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        //Always save Event to Db even if it is an old event which will not be shown in list view.
+        saveEventToDb(myEvent);
+    }
+
+    private void saveEventToDb(Event event) {
+        myDbHandler.addEvent(event);
+        Log.d("Event", "Event added to Db: " + event.name);
+    }
+
     public void logout() {
         LoginManager.getInstance().logOut();
         Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
         startActivity(intent);
     }
-
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {

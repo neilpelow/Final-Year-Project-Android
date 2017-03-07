@@ -43,6 +43,12 @@ public class GraphApi {
         request.executeAsync();
     }
 
+    public static String getAccessToken() {
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        String myAccessToken = accessToken.toString();
+        return myAccessToken;
+    }
+
     public static void getFriendList(AccessToken accessToken) {
         Profile profile = Profile.getCurrentProfile();
         String userId = profile.getId();

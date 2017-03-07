@@ -77,8 +77,6 @@ public class CreateMeetUpActivity extends AppCompatActivity implements AdapterVi
                     JSONObject eventJSONObject = json.getJSONObject("events");
                     JSONArray dataJSONArray = eventJSONObject.getJSONArray("data");
 
-                    //List<Event> eventList = new ArrayList<Event>();
-
                     for(int i = 0; i < dataJSONArray.length(); i++){
                         JSONObject event = dataJSONArray.getJSONObject(i);
                         Event myEvent = new Event();
