@@ -1,6 +1,9 @@
 package com.example.neilpelow.finalyearproject;
 
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.facebook.AccessToken;
@@ -65,32 +68,6 @@ public class GraphApi {
                         Log.d("Graph", "Friend list info successfully collected");
                         Log.d("Graph", response.getRawResponse());
                         Log.d("Graph", response.getRequest().toString());
-                    }
-                });
-
-        Bundle parameters = new Bundle();
-        parameters.putString("fields", "name,events,user_friends");
-        request.setParameters(parameters);
-        request.executeAsync();
-    }
-
-    public static void getFriendsAttendingEvent(AccessToken accessToken, Event event) {
-        String eventId = event.getId();
-        GraphRequest request = GraphRequest.newGraphPathRequest(
-                accessToken,
-                "/"
-                        + eventId
-                        + "/attending",
-                new GraphRequest.Callback() {
-                    @Override
-                    public void onCompleted(GraphResponse response) {
-                        //Log user information
-                        String myResponse = response.toString();
-                        Log.d("Graph", "Event attendees info successfully collected");
-                        Log.d("Graph", response.getRawResponse());
-                        Log.d("Graph", response.getRequest().toString());
-
-                        GraphRequest nextResultsRequests = response.getRequestForPagedResults(GraphResponse.PagingDirection.NEXT);
                     }
                 });
 

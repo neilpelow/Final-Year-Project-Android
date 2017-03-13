@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.PopupMenu;
+import android.util.Log;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -94,7 +95,18 @@ public class CreateMeetUpActivity extends AppCompatActivity implements AdapterVi
             }
         });
 
+        //Just for testing!
+        ArrayList<User> userArray = myDbHandler.getAllUsers();
+        int size = userArray.size();
+        String sizeString = Integer.toString(size);
 
+        for(int i = 0; i < userArray.size(); i++){
+
+            User user = userArray.get(i);
+            Log.d("User", user.username);
+
+        }
+        Log.d("User", sizeString);
     }
 
     public void onLoaded(ArrayList<Event> eventList) {
@@ -176,6 +188,7 @@ public class CreateMeetUpActivity extends AppCompatActivity implements AdapterVi
         }
 
         //Always save Event to Db even if it is an old event which will not be shown in list view.
+        //Old events will be used in Recommender system.
         saveEventToDb(myEvent);
         return myEvent;
     }

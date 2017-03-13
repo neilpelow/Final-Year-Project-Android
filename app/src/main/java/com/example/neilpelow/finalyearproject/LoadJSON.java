@@ -98,4 +98,33 @@ public class LoadJSON {
         }
 
     }
+
+    public static void getFriendsAttendingEvent(final Event event, final Callback callback) {
+        String eventId = event.getId();
+        Log.d("Event", "Get attending list of " + event.name);
+        GraphRequest request = GraphRequest.newGraphPathRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/"
+                        + eventId
+                        + "/attending",
+                new GraphRequest.Callback() {
+                    @Override
+                    public void onCompleted(GraphResponse response) {
+                        //Log user information
+                        Log.d("Graph", event.name + " attendees info successfully collected");
+                        Log.d("Graph", response.getRawResponse());
+                        try {
+                            callback.onCompleted(response);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                });
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "name,events,user_friends");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
 }

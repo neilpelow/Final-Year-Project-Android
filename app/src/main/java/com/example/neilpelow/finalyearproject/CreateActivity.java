@@ -61,9 +61,6 @@ public class CreateActivity extends Activity {
         event.startTime = unpackExtra(eventStartTimeString);
         event.rsvpStatus = unpackExtra(eventRSVPString);
 
-        //Testing
-        GraphApi.getFriendsAttendingEvent(AccessToken.getCurrentAccessToken(), event);
-
         //Create Meet up and populate with fields from Event
         Meetup meetup = new Meetup();
         meetup = populateMeetUp(event, meetup);

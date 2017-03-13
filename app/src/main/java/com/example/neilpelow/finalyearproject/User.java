@@ -11,14 +11,16 @@ import static com.facebook.GraphRequest.TAG;
 public class User {
     public String userId;
     public String username;
+    public String eventId;
 
     public User() {
 
     }
 
-    public User(String userId, String username) {
+    public User(String userId, String username, String eventId) {
         this.userId = userId;
         this.username = username;
+        this.eventId = eventId;
     }
 
     public String getUserId() {
@@ -27,5 +29,9 @@ public class User {
 
     public String getName() {
         return username;
+    }
+
+    public String getEventId() {
+        return eventId;
     }
 }

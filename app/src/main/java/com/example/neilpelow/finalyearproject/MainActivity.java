@@ -2,13 +2,17 @@ package com.example.neilpelow.finalyearproject;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
@@ -27,6 +31,7 @@ import android.view.MenuItem;
 import android.content.Intent;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -43,7 +48,9 @@ import com.androidnetworking.error.ANError;
 import com.androidnetworking.interfaces.JSONArrayRequestListener;
 import com.androidnetworking.interfaces.JSONObjectRequestListener;
 import com.androidnetworking.interfaces.ParsedRequestListener;
+import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
 import com.google.gson.JsonArray;
 
@@ -51,11 +58,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import java.util.HashMap;
 import java.util.List;
 
+import static android.R.attr.bitmap;
+import static android.R.attr.data;
 import static com.example.neilpelow.finalyearproject.Event.createEventList;
 
 
@@ -118,19 +128,18 @@ public class MainActivity extends AppCompatActivity
         //Get params for
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         Location myLocation = getLocation(locationManager);
-        double lat = myLocation.getLatitude();
-        double lng = myLocation.getLongitude();
-        //Params
-        String latitude = Double.toString(lat);
-        String longitude = Double.toString(lng);
-        //Hard Code for now
-        String distance = "500";
-        String accessToken = GraphApi.getAccessToken();
-        accessToken = accessToken.substring(19,241);
+        if(myLocation != null) {
+            double lat = myLocation.getLatitude();
+            double lng = myLocation.getLongitude();
+            String latitude = Double.toString(lat);
+            String longitude = Double.toString(lng);
+            //Hard Code for now
+            String distance = "100000";
+            String accessToken = GraphApi.getAccessToken();
+            accessToken = accessToken.substring(19,241);
 
-        sendRequest(latitude, longitude, distance, accessToken);
-
-
+            sendRequest(latitude, longitude, distance, accessToken);
+        }
     }
 
     private void askForPermission(String permission, Integer requestCode) {
@@ -156,11 +165,10 @@ public class MainActivity extends AppCompatActivity
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             askForPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, LOCATION);
         }
-        String locationProvider = LocationManager.GPS_PROVIDER;
+        String locationProvider = LocationManager.NETWORK_PROVIDER;
         // Or use LocationManager.NETWORK_PROVIDER
 
-        Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
-        return  lastKnownLocation;
+        return locationManager.getLastKnownLocation(locationProvider);
     }
 
     public void onLoaded(ArrayList<Meetup> meetupList) {
@@ -208,8 +216,8 @@ public class MainActivity extends AppCompatActivity
 
                             for(int i = 0; i < dataJSONArray.length(); i++){
                                 JSONObject event = dataJSONArray.getJSONObject(i);
-                                Event myEvent = new Event();
-                                createEventObject(event, myEvent);
+
+                                createEventObject(event);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -223,8 +231,9 @@ public class MainActivity extends AppCompatActivity
                 });
     }
 
-    private void createEventObject (JSONObject event, Event myEvent) {
+    private void createEventObject (JSONObject event) {
         //Get event object values
+        final Event myEvent = new Event();
         try {
             if(!event.isNull("name")) {
                 myEvent.name = event.getString("name");
@@ -250,7 +259,60 @@ public class MainActivity extends AppCompatActivity
         }
 
         //Always save Event to Db even if it is an old event which will not be shown in list view.
+        //This is very much not okay anymore...
         saveEventToDb(myEvent);
+        //Get list of users attending each event.
+        //------------------------------------------ DON'T DO THIS ON THE MAIN THREAD YOU STUPID MORON!!!! ------------------------------------------//
+        //GraphApi.getFriendsAttendingEvent(AccessToken.getCurrentAccessToken(), myEvent);
+        LoadJSON j = new LoadJSON();
+        j.getFriendsAttendingEvent( myEvent, new Callback()  {
+            @RequiresApi(api = Build.VERSION_CODES.N)
+            @Override
+            public void onCompleted(Object data) throws JSONException {
+                GraphResponse response = (GraphResponse) data;
+                String stringResponse = response.getRawResponse();
+                Log.d("Event", stringResponse);
+                JSONObject json = new JSONObject(stringResponse);
+                try {
+                    JSONArray dataJSONArray = json.getJSONArray("data");
+
+                    for(int i = 0; i < dataJSONArray.length(); i++){
+                        JSONObject user = dataJSONArray.getJSONObject(i);
+
+                        final Event myFinalEvent = myEvent;
+
+                        createUserObject(user, myFinalEvent);
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void createUserObject(JSONObject user, Event event) {
+        User myUser = new User();
+        try {
+            if(!user.isNull("name")) {
+                myUser.username = user.getString("name");
+            }
+
+            if(!user.isNull("id")) {
+                myUser.userId = user.getString("id");
+            }
+
+            if(event.getId() != null) {
+                myUser.eventId = event.getId();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        saveUserToDb(myUser);
+    }
+
+    private void saveUserToDb(User user) {
+        myDbHandler.addUser(user);
+        Log.d("User", "User added to Db: " + user.username);
     }
 
     private void saveEventToDb(Event event) {

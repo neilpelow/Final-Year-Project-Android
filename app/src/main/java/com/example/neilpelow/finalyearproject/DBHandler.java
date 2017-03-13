@@ -16,7 +16,7 @@ import java.util.ArrayList;
 
 public class DBHandler extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 6;
 
     private static final String DATABASE_NAME = "eventsDb";
 
@@ -45,6 +45,7 @@ public class DBHandler extends SQLiteOpenHelper {
     //Users Table column names
     private static final String KEY_USERID = "id";
     private static final String KEY_USERNAME = "username";
+    private static final String KEY_EVENTID = "eventId";
 
     public DBHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -101,8 +102,11 @@ public class DBHandler extends SQLiteOpenHelper {
                 + "("
                 + KEY_USERID + " INTEGER PRIMARY KEY " + " UNIQUE, "
                 + KEY_USERNAME + " TEXT, "
+                + KEY_EVENTID + " INTEGER, "
+                + " FOREIGN KEY(" + KEY_EVENTID + ") REFERENCES " + TABLE_EVENTS + "(" + KEY_ID + ")"
                 + ")";
         try {
+            db.execSQL("PRAGMA foreign_keys=ON");
             db.execSQL(CREATE_USERS_TABLE);
         } catch (SQLiteException e) {
             Log.d("DB", "Users table already exists");
@@ -172,6 +176,7 @@ public class DBHandler extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(KEY_USERID,user.getUserId());
         values.put(KEY_USERNAME, user.getName());
+        values.put(KEY_EVENTID, user.getEventId());
         // Inserting row
         db.insert(TABLE_USERS,null, values);
         String log = "Id: " + user.getUserId() + " Name: " + user.getName();
@@ -193,8 +198,7 @@ public class DBHandler extends SQLiteOpenHelper {
         return event;
     }
 
-    public ArrayList<Meetup> getAllMeetups()
-    {
+    public ArrayList<Meetup> getAllMeetups() {
         // Select All Query
         String selectQuery = "SELECT * FROM " + TABLE_MEETUPS;
         // Get the instance of the database
@@ -241,11 +245,55 @@ public class DBHandler extends SQLiteOpenHelper {
         return meetupList;
     }
 
+    public ArrayList<User> getAllUsers() {
+        // Select All Query
+        String selectQuery = "SELECT * FROM " + TABLE_USERS;
+        // Get the instance of the database
+        SQLiteDatabase db = this.getWritableDatabase();
+        //get the cursor you're going to use
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        //this is optional - if you want to return one object
+        //you don't need a list
+        ArrayList<User> userList = new ArrayList<User>();
+
+        //you should always use the try catch statement incase
+        //something goes wrong when trying to read the data
+        try
+        {
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    //the .getString(int x) method of the cursor returns the column
+                    //of the table your query returned
+                    User user= new User(cursor.getString(0),
+                            cursor.getString(1),
+                            cursor.getString(2)
+                    );
+                    // Adding contact to list
+                    userList.add(user);
+                } while (cursor.moveToNext());
+            }
+        }
+        catch (SQLiteException e)
+        {
+            Log.d("SQL Error", e.getMessage());
+            return null;
+        }
+        finally
+        {
+            //release all your resources
+            cursor.close();
+            db.close();
+        }
+        return userList;
+    }
+
 
     public Venue retrieveAllVenues(String id) {
         SQLiteDatabase db = this.getReadableDatabase();
         Venue venue = new Venue();
-        String query = "SELECT * FROM TABLE_VENUES WHERE " +  " EQUALS "
+        String query = "SELECT * FROM TABLE_VENUES WHERE " + " EQUALS "
                 + id
                 + ";";
         db.execSQL(query);
