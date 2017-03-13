@@ -8,16 +8,6 @@
     android:padding="@dimen/activity_vertical_margin"
     android:weightSum="1">
 
-    <ImageView
-        android:id="@+id/thumbImage"
-        android:layout_width="203dp"
-        android:layout_height="70dp"
-        android:layout_alignParentLeft="true"
-        android:layout_centerVertical="true"
-        android:layout_marginRight="10dp"
-        android:background="@drawable/logoplaceholder"
-        android:layout_weight="0.27" />
-
     <TextView
         android:id="@+id/name"
         android:layout_width="376dp"

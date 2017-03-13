@@ -51,6 +51,7 @@ public class DBHandler extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+
     //------------------------------------CREATE STATEMENTS-------------------------------------//
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -186,16 +187,51 @@ public class DBHandler extends SQLiteOpenHelper {
 
 
     //------------------------------------SELECT STATEMENTS-------------------------------------//
-    public Event retrieveAllEvents(String id) {
+    public ArrayList<Event> getAllEvents() {
+        // Select All Query
+        String selectQuery = "SELECT * FROM " + TABLE_EVENTS;
+        // Get the instance of the database
         SQLiteDatabase db = this.getReadableDatabase();
-        Event event = new Event();
-        String query = "SELECT * FROM TABLE_EVENTS WHERE " +  " EQUALS "
-                + id
-                + ";";
-        db.execSQL(query);
+        //get the cursor you're going to use
+        Cursor cursor = db.rawQuery(selectQuery, null);
 
+        //this is optional - if you want to return one object
+        //you don't need a list
+        ArrayList<Event> eventList = new ArrayList<Event>();
 
-        return event;
+        //you should always use the try catch statement incase
+        //something goes wrong when trying to read the data
+        try
+        {
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    //the .getString(int x) method of the cursor returns the column
+                    //of the table your query returned
+                    Event event = new Event(cursor.getString(0),
+                            cursor.getString(1),
+                            cursor.getString(2),
+                            cursor.getString(3),
+                            cursor.getString(4),
+                            cursor.getString(5)
+                    );
+                    // Adding contact to list
+                    eventList.add(event);
+                } while (cursor.moveToNext());
+            }
+        }
+        catch (SQLiteException e)
+        {
+            Log.d("SQL Error", e.getMessage());
+            return null;
+        }
+        finally
+        {
+            //release all your resources
+            cursor.close();
+            db.close();
+        }
+        return eventList;
     }
 
     public ArrayList<Meetup> getAllMeetups() {
@@ -289,17 +325,28 @@ public class DBHandler extends SQLiteOpenHelper {
         return userList;
     }
 
-
-    public Venue retrieveAllVenues(String id) {
+    //User fields not being populated. Query not returning any/correct row?
+    public User isUserAttendingEvent(String userId, String eventId) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Venue venue = new Venue();
-        String query = "SELECT * FROM TABLE_VENUES WHERE " + " EQUALS "
-                + id
+        String query = "SELECT * FROM " +
+                TABLE_USERS
+                + " WHERE id = "
+                + userId
+                + " AND eventId = "
+                + eventId
                 + ";";
-        db.execSQL(query);
+        Cursor cursor = db.rawQuery(query, null);
 
+        User user = new User();
+            user.userId = cursor.getString(0);
+            user.username= cursor.getString(1);
+            user.eventId = cursor.getString(2);
 
-        return venue;
+        if(user != null) {
+            return user;
+        }
+        else {
+            return null;
+        }
     }
-
 }

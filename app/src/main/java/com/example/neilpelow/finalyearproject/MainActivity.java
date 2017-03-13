@@ -58,11 +58,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import java.util.HashMap;
 import java.util.List;
+
+import cz.msebera.android.httpclient.HttpResponse;
+import cz.msebera.android.httpclient.NameValuePair;
+import cz.msebera.android.httpclient.client.HttpClient;
+import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
+import cz.msebera.android.httpclient.client.methods.HttpPost;
+import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
+import cz.msebera.android.httpclient.message.BasicNameValuePair;
 
 import static android.R.attr.bitmap;
 import static android.R.attr.data;
@@ -134,11 +143,15 @@ public class MainActivity extends AppCompatActivity
             String latitude = Double.toString(lat);
             String longitude = Double.toString(lng);
             //Hard Code for now
-            String distance = "100000";
+            String distance = "1000";
             String accessToken = GraphApi.getAccessToken();
-            accessToken = accessToken.substring(19,241);
+
+            accessToken = accessToken.substring(19,234);
 
             sendRequest(latitude, longitude, distance, accessToken);
+
+            AsyncT asyncT = new AsyncT();
+            asyncT.execute();
         }
     }
 
@@ -264,8 +277,16 @@ public class MainActivity extends AppCompatActivity
         //Get list of users attending each event.
         //------------------------------------------ DON'T DO THIS ON THE MAIN THREAD YOU STUPID MORON!!!! ------------------------------------------//
         //GraphApi.getFriendsAttendingEvent(AccessToken.getCurrentAccessToken(), myEvent);
+
+        //Event access form within inner class so needs to be made final.
+        final Event myFinalEvent = myEvent;
+        getUserObject(myFinalEvent);
+    }
+
+    public void getUserObject(Event myFinalEvent) {
         LoadJSON j = new LoadJSON();
-        j.getFriendsAttendingEvent( myEvent, new Callback()  {
+        final Event myOtherFinalEvent = myFinalEvent;
+        j.getFriendsAttendingEvent( myFinalEvent, new Callback()  {
             @RequiresApi(api = Build.VERSION_CODES.N)
             @Override
             public void onCompleted(Object data) throws JSONException {
@@ -279,9 +300,7 @@ public class MainActivity extends AppCompatActivity
                     for(int i = 0; i < dataJSONArray.length(); i++){
                         JSONObject user = dataJSONArray.getJSONObject(i);
 
-                        final Event myFinalEvent = myEvent;
-
-                        createUserObject(user, myFinalEvent);
+                        createUserObject(user, myOtherFinalEvent);
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -308,6 +327,7 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         }
         saveUserToDb(myUser);
+        //Send JSON to Django server for RE here.
     }
 
     private void saveUserToDb(User user) {
@@ -341,6 +361,7 @@ public class MainActivity extends AppCompatActivity
         startActivity(intent);
     }
 
+    //Location methods
     @Override
     public void onProviderDisabled(String provider) {
 
@@ -366,6 +387,7 @@ public class MainActivity extends AppCompatActivity
         Toast.makeText(getBaseContext(), msg, Toast.LENGTH_LONG).show();
     }
 
+    //App drawer code. Auto generated.
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
         // TODO Auto-generated method stub
@@ -428,5 +450,78 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    /* Inner class to get response */
+    private class AsyncT extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            HttpClient httpclient = new DefaultHttpClient();
+            //HttpPost httppost = new HttpPost("<YOUR_SERVICE_URL>");
+
+            try {
+
+                ArrayList<User> userArrayList = myDbHandler.getAllUsers();
+                ArrayList<Event> eventArrayList = myDbHandler.getAllEvents();
+
+                ArrayList<JSONUser> jsonUserList = createJSONUsers(userArrayList, eventArrayList);
+
+                JSONArray userJSONArray = new JSONArray();
+
+                for (JSONUser jsonUser: jsonUserList) {
+                    JSONObject jsonobj = new JSONObject();
+                    jsonobj.put("name", jsonUser.userId);
+                    jsonobj.put("id", jsonUser.eventId);
+                    jsonobj.put("attending", jsonUser.attending);
+                    userJSONArray.put(jsonobj);
+                }
+
+                Log.d("JSONArray", userJSONArray.toString());
+
+                /*
+                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+                nameValuePairs.add(new BasicNameValuePair("req", jsonobj.toString()));
+
+                Log.e("mainToPost", "mainToPost" + nameValuePairs.toString());
+
+                // Use UrlEncodedFormEntity to send in proper format which we need
+                httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                // Execute HTTP Post Request
+                HttpResponse response = httpclient.execute(httppost);
+                */
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        public ArrayList<JSONUser> createJSONUsers(ArrayList<User> userList, ArrayList<Event> eventList){
+            ArrayList<JSONUser> jsonUsersList = new ArrayList<>();
+            for (Event event: eventList) {
+                for (User user: userList) {
+                    JSONUser jsonUser = new JSONUser();
+                    jsonUser.eventId = event.getId();
+                    jsonUser.userId = user.getUserId();
+                    if(setAttending(jsonUser) == true) {
+                        jsonUser.attending = true;
+                    } else {
+                        jsonUser.attending = false;
+                    }
+                    jsonUsersList.add(jsonUser);
+                }
+            }
+            return jsonUsersList;
+        }
+
+        public boolean setAttending(JSONUser jsonUser) {
+            if(myDbHandler.isUserAttendingEvent(jsonUser.userId, jsonUser.eventId) != null) {
+                return true; //User is attending.
+            } else {
+                return false; //User is not attending.
+            }
+        }
     }
 }
