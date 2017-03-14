@@ -150,6 +150,7 @@ public class MainActivity extends AppCompatActivity
 
             sendRequest(latitude, longitude, distance, accessToken);
 
+            //RE data creation
             AsyncT asyncT = new AsyncT();
             asyncT.execute();
         }
@@ -274,16 +275,13 @@ public class MainActivity extends AppCompatActivity
         //Always save Event to Db even if it is an old event which will not be shown in list view.
         //This is very much not okay anymore...
         saveEventToDb(myEvent);
-        //Get list of users attending each event.
-        //------------------------------------------ DON'T DO THIS ON THE MAIN THREAD YOU STUPID MORON!!!! ------------------------------------------//
-        //GraphApi.getFriendsAttendingEvent(AccessToken.getCurrentAccessToken(), myEvent);
 
         //Event access form within inner class so needs to be made final.
         final Event myFinalEvent = myEvent;
-        getUserObject(myFinalEvent);
+        getUserObjectForEvent(myFinalEvent);
     }
 
-    public void getUserObject(Event myFinalEvent) {
+    public void getUserObjectForEvent(Event myFinalEvent) {
         LoadJSON j = new LoadJSON();
         final Event myOtherFinalEvent = myFinalEvent;
         j.getFriendsAttendingEvent( myFinalEvent, new Callback()  {
@@ -322,6 +320,7 @@ public class MainActivity extends AppCompatActivity
 
             if(event.getId() != null) {
                 myUser.eventId = event.getId();
+                myUser.attending = "1";
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -461,36 +460,24 @@ public class MainActivity extends AppCompatActivity
 
             try {
 
+                //Create ArrayList of users that all have attending flag set to 1 i.e. attending.
                 ArrayList<User> userArrayList = myDbHandler.getAllUsers();
                 ArrayList<Event> eventArrayList = myDbHandler.getAllEvents();
-
-                ArrayList<JSONUser> jsonUserList = createJSONUsers(userArrayList, eventArrayList);
-
-                JSONArray userJSONArray = new JSONArray();
-
-                for (JSONUser jsonUser: jsonUserList) {
-                    JSONObject jsonobj = new JSONObject();
-                    jsonobj.put("name", jsonUser.userId);
-                    jsonobj.put("id", jsonUser.eventId);
-                    jsonobj.put("attending", jsonUser.attending);
-                    userJSONArray.put(jsonobj);
+                if(userArrayList.size() < 500){
+                    createNotAttendingUsers(userArrayList, eventArrayList);
                 }
-
-                Log.d("JSONArray", userJSONArray.toString());
-
-                /*
-                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-                nameValuePairs.add(new BasicNameValuePair("req", jsonobj.toString()));
-
-                Log.e("mainToPost", "mainToPost" + nameValuePairs.toString());
-
-                // Use UrlEncodedFormEntity to send in proper format which we need
-                httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-                // Execute HTTP Post Request
-                HttpResponse response = httpclient.execute(httppost);
-                */
-
+                //Create JSON for each user. Both attending and not attending.
+                JSONArray usersJSONObj = new JSONArray();
+                for (User user:userArrayList) {
+                    JSONObject jsonUser = new JSONObject();
+                    jsonUser.put("userId", user.userId);
+                    jsonUser.put("eventId", user.eventId);
+                    jsonUser.put("attending", user.attending);
+                    usersJSONObj.put(jsonUser);
+                }
+                Log.d("omg", usersJSONObj.toString());
+                //This actually works!
+                //TODO: send JSON Object to Python server RE.
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -498,29 +485,18 @@ public class MainActivity extends AppCompatActivity
             return null;
         }
 
-        public ArrayList<JSONUser> createJSONUsers(ArrayList<User> userList, ArrayList<Event> eventList){
-            ArrayList<JSONUser> jsonUsersList = new ArrayList<>();
-            for (Event event: eventList) {
-                for (User user: userList) {
-                    JSONUser jsonUser = new JSONUser();
-                    jsonUser.eventId = event.getId();
-                    jsonUser.userId = user.getUserId();
-                    if(setAttending(jsonUser) == true) {
-                        jsonUser.attending = true;
-                    } else {
-                        jsonUser.attending = false;
+        public void createNotAttendingUsers(ArrayList<User> userList, ArrayList<Event> eventList){
+            for (User user: userList) {
+                for (Event event: eventList) {
+                    if(user.eventId != event.id) {
+                        User newUser = new User();
+                        newUser.eventId = event.id;
+                        newUser.userId = user.userId;
+                        newUser.username = user.username;
+                        newUser.attending = "0";
+                        myDbHandler.addUser(newUser);
                     }
-                    jsonUsersList.add(jsonUser);
                 }
-            }
-            return jsonUsersList;
-        }
-
-        public boolean setAttending(JSONUser jsonUser) {
-            if(myDbHandler.isUserAttendingEvent(jsonUser.userId, jsonUser.eventId) != null) {
-                return true; //User is attending.
-            } else {
-                return false; //User is not attending.
             }
         }
     }

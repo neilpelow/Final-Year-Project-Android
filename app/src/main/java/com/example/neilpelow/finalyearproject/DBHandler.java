@@ -16,7 +16,7 @@ import java.util.ArrayList;
 
 public class DBHandler extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 16;
 
     private static final String DATABASE_NAME = "eventsDb";
 
@@ -46,6 +46,7 @@ public class DBHandler extends SQLiteOpenHelper {
     private static final String KEY_USERID = "id";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_EVENTID = "eventId";
+    private static final String KEY_ATTENDING = "attending";
 
     public DBHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -101,10 +102,12 @@ public class DBHandler extends SQLiteOpenHelper {
 
         String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_USERS
                 + "("
-                + KEY_USERID + " INTEGER PRIMARY KEY " + " UNIQUE, "
+                + KEY_USERID + " INTEGER, "
                 + KEY_USERNAME + " TEXT, "
                 + KEY_EVENTID + " INTEGER, "
-                + " FOREIGN KEY(" + KEY_EVENTID + ") REFERENCES " + TABLE_EVENTS + "(" + KEY_ID + ")"
+                + KEY_ATTENDING + " TEXT, "
+                + " FOREIGN KEY(" + KEY_EVENTID + ") REFERENCES " + TABLE_EVENTS + "(" + KEY_ID + "), "
+                + "UNIQUE(" + KEY_USERID + ", " + KEY_EVENTID + ")"
                 + ")";
         try {
             db.execSQL("PRAGMA foreign_keys=ON");
@@ -120,7 +123,10 @@ public class DBHandler extends SQLiteOpenHelper {
         // Drop older table if existed
         //Not sure if I really want to do this...
         //Turns out I do want to. Good Good :)
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENTS + TABLE_MEETUPS + TABLE_VENUES + TABLE_USERS + ";");
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_EVENTS + ";");
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USERS + ";");
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_VENUES + ";");
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MEETUPS + ";");
         // Creating tables again
         onCreate(db);
     }
@@ -178,11 +184,17 @@ public class DBHandler extends SQLiteOpenHelper {
         values.put(KEY_USERID,user.getUserId());
         values.put(KEY_USERNAME, user.getName());
         values.put(KEY_EVENTID, user.getEventId());
+        values.put(KEY_ATTENDING, user.getAttending());
         // Inserting row
-        db.insert(TABLE_USERS,null, values);
-        String log = "Id: " + user.getUserId() + " Name: " + user.getName();
-        Log.d("DB", log);
-        db.close();
+        try {
+            db.insert(TABLE_USERS,null, values);
+            String log = "Id: " + user.getUserId() + " Name: " + user.getName();
+            Log.d("DB", log);
+            db.close();
+        } catch(Exception e){
+            Log.d("BG", "All is well.");
+        }
+
     }
 
 
@@ -304,7 +316,8 @@ public class DBHandler extends SQLiteOpenHelper {
                     //of the table your query returned
                     User user= new User(cursor.getString(0),
                             cursor.getString(1),
-                            cursor.getString(2)
+                            cursor.getString(2),
+                            cursor.getString(3)
                     );
                     // Adding contact to list
                     userList.add(user);
@@ -323,30 +336,5 @@ public class DBHandler extends SQLiteOpenHelper {
             db.close();
         }
         return userList;
-    }
-
-    //User fields not being populated. Query not returning any/correct row?
-    public User isUserAttendingEvent(String userId, String eventId) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT * FROM " +
-                TABLE_USERS
-                + " WHERE id = "
-                + userId
-                + " AND eventId = "
-                + eventId
-                + ";";
-        Cursor cursor = db.rawQuery(query, null);
-
-        User user = new User();
-            user.userId = cursor.getString(0);
-            user.username= cursor.getString(1);
-            user.eventId = cursor.getString(2);
-
-        if(user != null) {
-            return user;
-        }
-        else {
-            return null;
-        }
     }
 }

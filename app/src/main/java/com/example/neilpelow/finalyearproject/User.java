@@ -12,15 +12,17 @@ public class User {
     public String userId;
     public String username;
     public String eventId;
+    public String attending;
 
     public User() {
 
     }
 
-    public User(String userId, String username, String eventId) {
+    public User(String userId, String username, String eventId, String attending) {
         this.userId = userId;
         this.username = username;
         this.eventId = eventId;
+        this.attending = attending;
     }
 
     public String getUserId() {
@@ -33,5 +35,9 @@ public class User {
 
     public String getEventId() {
         return eventId;
+    }
+
+    public String getAttending() {
+        return attending;
     }
 }
