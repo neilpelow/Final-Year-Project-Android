@@ -13,6 +13,7 @@ import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.facebook.Profile;
 import com.facebook.ProfileTracker;
 import com.google.android.gms.appdatasearch.GetRecentContextCall;
@@ -119,6 +120,32 @@ public class LoadJSON {
                             e.printStackTrace();
                         }
 
+                    }
+                });
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "name,events,user_friends");
+        request.setParameters(parameters);
+        request.executeAsync();
+    }
+
+    public static void getUserProfileEvents(User user, final Callback callback){
+        String userId = user.userId;
+        /* make the API call */
+        GraphRequest request = GraphRequest.newGraphPathRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/"
+                        + userId
+                        + "/events",
+                new GraphRequest.Callback() {
+                    @Override
+                    public void onCompleted(GraphResponse response) {
+                    /* handle the result */
+                        try {
+                            callback.onCompleted(response);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
 

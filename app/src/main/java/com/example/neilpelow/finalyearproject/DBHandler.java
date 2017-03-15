@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.facebook.Profile;
+
 import java.util.ArrayList;
 
 /**
@@ -293,6 +295,43 @@ public class DBHandler extends SQLiteOpenHelper {
         return meetupList;
     }
 
+    public ArrayList<User> getMyProfileUserObjects() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ArrayList<User> userList = new ArrayList<>();
+        Profile profile = Profile.getCurrentProfile();
+        String id = profile.getId();
+        String query =
+                "SELECT * FROM "
+                        + TABLE_USERS
+                        + " WHERE id = "
+                        + id
+                        + ";";
+        Cursor cursor = db.rawQuery(query, null);
+        try {
+            // looping through all rows and adding to list
+            if (cursor.moveToFirst()) {
+                do {
+                    //the .getString(int x) method of the cursor returns the column
+                    //of the table your query returned
+                    User user= new User(cursor.getString(0),
+                            cursor.getString(1),
+                            cursor.getString(2),
+                            cursor.getString(3)
+                    );
+                    // Adding contact to list
+                    userList.add(user);
+                } while (cursor.moveToNext());
+            }
+        } catch (SQLiteException e) {
+            Log.d("SQL Error", e.getMessage());
+            return null;
+        }
+        //release all your resources
+        cursor.close();
+        db.close();
+        return userList;
+    }
+
     public ArrayList<User> getAllUsers() {
         // Select All Query
         String selectQuery = "SELECT * FROM " + TABLE_USERS;
@@ -303,7 +342,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
         //this is optional - if you want to return one object
         //you don't need a list
-        ArrayList<User> userList = new ArrayList<User>();
+        ArrayList<User> userList = new ArrayList<>();
 
         //you should always use the try catch statement incase
         //something goes wrong when trying to read the data
@@ -336,5 +375,15 @@ public class DBHandler extends SQLiteOpenHelper {
             db.close();
         }
         return userList;
+    }
+
+    public void dropAllNonAttendingUsers() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String query =
+                "DELETE FROM "
+                + TABLE_USERS
+                + " WHERE attending = 0;";
+        db.execSQL(query);
+        db.close();
     }
 }

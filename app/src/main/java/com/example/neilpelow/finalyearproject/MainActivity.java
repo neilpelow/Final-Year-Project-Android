@@ -51,6 +51,7 @@ import com.androidnetworking.interfaces.ParsedRequestListener;
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphResponse;
+import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.google.gson.JsonArray;
 
@@ -63,7 +64,9 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import cz.msebera.android.httpclient.HttpResponse;
 import cz.msebera.android.httpclient.NameValuePair;
@@ -75,6 +78,7 @@ import cz.msebera.android.httpclient.message.BasicNameValuePair;
 
 import static android.R.attr.bitmap;
 import static android.R.attr.data;
+import static android.R.attr.popupMenuStyle;
 import static com.example.neilpelow.finalyearproject.Event.createEventList;
 
 
@@ -278,10 +282,10 @@ public class MainActivity extends AppCompatActivity
 
         //Event access form within inner class so needs to be made final.
         final Event myFinalEvent = myEvent;
-        getUserObjectForEvent(myFinalEvent);
+        getUserObjectsForEvent(myFinalEvent);
     }
 
-    public void getUserObjectForEvent(Event myFinalEvent) {
+    public void getUserObjectsForEvent(Event myFinalEvent) {
         LoadJSON j = new LoadJSON();
         final Event myOtherFinalEvent = myFinalEvent;
         j.getFriendsAttendingEvent( myFinalEvent, new Callback()  {
@@ -451,6 +455,34 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    private Event createEventList (JSONObject event, Event myEvent) {
+        //Get event object values
+        try {
+            if(!event.isNull("name")) {
+                myEvent.name = event.getString("name");
+            }
+
+            if(!event.isNull("id")) {
+                myEvent.id = event.getString("id");
+            }
+
+            if(!event.isNull("description")) {
+                myEvent.description = event.getString("description");
+            }
+
+            if(!event.isNull("start_time")) {
+                myEvent.startTime = event.getString("start_time");
+            }
+
+            if(!event.isNull("rsvpStatus")) {
+                myEvent.rsvpStatus = event.getString("rsvpStatus");
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return myEvent;
+    }
+
     /* Inner class to get response */
     private class AsyncT extends AsyncTask<Void, Void, Void> {
         @Override
@@ -459,23 +491,42 @@ public class MainActivity extends AppCompatActivity
             //HttpPost httppost = new HttpPost("<YOUR_SERVICE_URL>");
 
             try {
-
-                //Create ArrayList of users that all have attending flag set to 1 i.e. attending.
+                //Delete all users not attending an event
+                myDbHandler.dropAllNonAttendingUsers();
+                //Add my profile user objects to the Db
+                getMyUserInfo();
+                //Retrieve all users from the db
                 ArrayList<User> userArrayList = myDbHandler.getAllUsers();
                 ArrayList<Event> eventArrayList = myDbHandler.getAllEvents();
-                if(userArrayList.size() < 500){
-                    createNotAttendingUsers(userArrayList, eventArrayList);
-                }
+
+                //Get array list of my user profile objects
+                ArrayList<User> myProfileUserArrayList = myDbHandler.getMyProfileUserObjects();
+
+                //Limit number of elements in list.
+                userArrayList = new ArrayList<>(userArrayList.subList(1,200));
+
+                //Add all my profile users back in to the Array list that might have been removed in above step.
+                //Duplicates will not be added to the final list.
+                userArrayList.addAll(myProfileUserArrayList);
+                Set<User> hs = new HashSet<>();
+                hs.addAll(userArrayList);
+                userArrayList.clear();
+                userArrayList.addAll(hs);
+
+                //Create users that are not attending each event. Db constraints will prevent errors due to a user attending multiple events.
+                ArrayList<User> notAttendingList = createNotAttendingUsers(userArrayList, eventArrayList);
+                userArrayList.addAll(notAttendingList);
                 //Create JSON for each user. Both attending and not attending.
-                JSONArray usersJSONObj = new JSONArray();
+                JSONArray usersJSONArray = new JSONArray();
+
                 for (User user:userArrayList) {
                     JSONObject jsonUser = new JSONObject();
                     jsonUser.put("userId", user.userId);
                     jsonUser.put("eventId", user.eventId);
                     jsonUser.put("attending", user.attending);
-                    usersJSONObj.put(jsonUser);
+                    usersJSONArray.put(jsonUser);
                 }
-                Log.d("omg", usersJSONObj.toString());
+                Log.d("omg", usersJSONArray.toString());
                 //This actually works!
                 //TODO: send JSON Object to Python server RE.
 
@@ -485,7 +536,8 @@ public class MainActivity extends AppCompatActivity
             return null;
         }
 
-        public void createNotAttendingUsers(ArrayList<User> userList, ArrayList<Event> eventList){
+        public ArrayList<User> createNotAttendingUsers(ArrayList<User> userList, ArrayList<Event> eventList){
+            ArrayList<User> newUserList = new ArrayList<>();
             for (User user: userList) {
                 for (Event event: eventList) {
                     if(user.eventId != event.id) {
@@ -494,10 +546,52 @@ public class MainActivity extends AppCompatActivity
                         newUser.userId = user.userId;
                         newUser.username = user.username;
                         newUser.attending = "0";
-                        myDbHandler.addUser(newUser);
+                        newUserList.add(newUser);
+                        //myDbHandler.addUser(newUser);
                     }
                 }
             }
+            return newUserList;
+        }
+
+        /*
+        Get user profile.
+        Get each event the user is attending.
+        Add all these events to the Db.
+        Create User object for each event.
+        Save these Users to the Db.
+         */
+        public void getMyUserInfo(){
+            User user = new User();
+            final Profile profile = Profile.getCurrentProfile();
+            user.userId = profile.getId();
+            LoadJSON j = new LoadJSON();
+            j.getUserProfileEvents(user, new Callback() {
+                @RequiresApi(api = Build.VERSION_CODES.N)
+                @Override
+                public void onCompleted(Object data) throws JSONException {
+                    GraphResponse response = (GraphResponse) data;
+                    String stringResponse = response.getRawResponse();
+                    JSONObject json = new JSONObject(stringResponse);
+                    try {
+                        //ArrayList to hold all my profile users
+
+                        JSONArray dataJSONArray = json.getJSONArray("data");
+                        for(int i = 0; i < dataJSONArray.length(); i++){
+                            JSONObject event = dataJSONArray.getJSONObject(i);
+                            Event myEvent = new Event();
+                            myEvent = createEventList(event, myEvent);
+                            User user = new User();
+                            user.userId = profile.getId();
+                            user.eventId = myEvent.id;
+                            saveUserToDb(user);
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
     }
 }

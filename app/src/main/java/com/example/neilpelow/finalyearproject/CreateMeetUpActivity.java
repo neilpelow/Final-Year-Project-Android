@@ -94,19 +94,6 @@ public class CreateMeetUpActivity extends AppCompatActivity implements AdapterVi
                 }
             }
         });
-
-        //Just for testing!
-        ArrayList<User> userArray = myDbHandler.getAllUsers();
-        int size = userArray.size();
-        String sizeString = Integer.toString(size);
-
-        for(int i = 0; i < userArray.size(); i++){
-
-            User user = userArray.get(i);
-            Log.d("User", user.username);
-
-        }
-        Log.d("User", sizeString);
     }
 
     public void onLoaded(ArrayList<Event> eventList) {
