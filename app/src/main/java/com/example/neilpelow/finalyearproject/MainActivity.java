@@ -1,13 +1,11 @@
 package com.example.neilpelow.finalyearproject;
 
+import android.*;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,7 +13,6 @@ import android.provider.Settings;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
@@ -31,55 +28,31 @@ import android.view.MenuItem;
 import android.content.Intent;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.common.Priority;
 import com.androidnetworking.error.ANError;
-import com.androidnetworking.interfaces.JSONArrayRequestListener;
 import com.androidnetworking.interfaces.JSONObjectRequestListener;
-import com.androidnetworking.interfaces.ParsedRequestListener;
-import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphResponse;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
-import com.google.gson.JsonArray;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.InputStream;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import cz.msebera.android.httpclient.HttpResponse;
-import cz.msebera.android.httpclient.NameValuePair;
-import cz.msebera.android.httpclient.client.HttpClient;
-import cz.msebera.android.httpclient.client.entity.UrlEncodedFormEntity;
-import cz.msebera.android.httpclient.client.methods.HttpPost;
-import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
-import cz.msebera.android.httpclient.message.BasicNameValuePair;
-
-import static android.R.attr.bitmap;
-import static android.R.attr.data;
-import static android.R.attr.popupMenuStyle;
-import static com.example.neilpelow.finalyearproject.Event.createEventList;
 
 
 public class MainActivity extends AppCompatActivity
@@ -112,6 +85,12 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        Profile profile = Profile.getCurrentProfile();
+        if(profile == null){
+            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+            startActivity(intent);
+        }
+
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -135,29 +114,41 @@ public class MainActivity extends AppCompatActivity
         mListView = (ListView) findViewById(R.id.list_view);
         mListView.setOnItemClickListener(this);
 
-        meetupList = myDbHandler.getAllMeetups();
-        onLoaded(meetupList);
+        prepareMeetupList();
 
-        //Get params for
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        Location myLocation = getLocation(locationManager);
-        if(myLocation != null) {
-            double lat = myLocation.getLatitude();
-            double lng = myLocation.getLongitude();
-            String latitude = Double.toString(lat);
-            String longitude = Double.toString(lng);
-            //Hard Code for now
-            String distance = "1000";
-            String accessToken = GraphApi.getAccessToken();
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                        PackageManager.PERMISSION_GRANTED) {
+            locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+            Location myLocation = getLocation(locationManager);
+            if(myLocation != null) {
+                double lat = myLocation.getLatitude();
+                double lng = myLocation.getLongitude();
+                String latitude = Double.toString(lat);
+                String longitude = Double.toString(lng);
+                //Hard Code for now
+                String distance = "1000";
+                String accessToken = GraphApi.getAccessToken();
 
-            accessToken = accessToken.substring(19,234);
+                accessToken = accessToken.replace("{AccessToken token:", "");
+                accessToken = accessToken.replace(" permissions:[public_profile, user_friends, user_events, user_status]}", "");
 
-            sendRequest(latitude, longitude, distance, accessToken);
 
-            //RE data creation
-            AsyncT asyncT = new AsyncT();
-            asyncT.execute();
+                sendRequest(latitude, longitude, distance, accessToken);
+
+                //RE data creation
+                AsyncT asyncT = new AsyncT();
+                asyncT.execute();
+            }
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 123);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();  // Always call the superclass method first
     }
 
     private void askForPermission(String permission, Integer requestCode) {
@@ -178,13 +169,58 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public void prepareMeetupList() {
+        meetupList = myDbHandler.getAllMeetups();
+        Recommend rec = myDbHandler.getAllRecommendations();
+        if(rec.id1 != null && rec.id2 != null && rec.id3 != null && rec.id4 != null && rec.id5 != null && rec.id6 != null) {
+
+            ArrayList<Event> newEventList = new ArrayList<>();
+
+            Event event1 = myDbHandler.getEventById(rec.id1);
+            if(event1 != null) {
+                newEventList.add(event1);
+            }
+
+            Event event2 = myDbHandler.getEventById(rec.id2);
+            if(event2 != null) {
+                newEventList.add(event2);
+            }
+
+            Event event3 = myDbHandler.getEventById(rec.id3);
+            if(event3 != null) {
+                newEventList.add(event3);
+            }
+
+            Event event4 = myDbHandler.getEventById(rec.id4);
+            if(event4 != null) {
+                newEventList.add(event4);
+            }
+
+            Event event5 = myDbHandler.getEventById(rec.id5);
+            if(event5 != null) {
+                newEventList.add(event5);
+            }
+
+            Event event6 = myDbHandler.getEventById(rec.id6);
+            if(event6 != null) {
+                newEventList.add(event6);
+            }
+
+            for (Event event: newEventList) {
+                if(event.id != null){
+                    Meetup meetup = new Meetup(event.id, event.description, event.name, event.address, event.startTime, event.rsvpStatus);
+                    meetupList.add(meetup);
+                }
+            }
+        }
+        onLoaded(meetupList);
+    }
 
     public Location getLocation(LocationManager locationManager) {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             askForPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, LOCATION);
         }
         String locationProvider = LocationManager.NETWORK_PROVIDER;
-        // Or use LocationManager.NETWORK_PROVIDER
 
         return locationManager.getLastKnownLocation(locationProvider);
     }
@@ -215,6 +251,7 @@ public class MainActivity extends AppCompatActivity
         mListView.setAdapter(adapter);
     }
 
+    //Location based event search
     public void sendRequest(String latitude, String longitude, String distance, String accessToken) {
         AndroidNetworking.get("http://46.101.31.182:3000/events")
                 .addQueryParameter("lat", latitude)
@@ -272,6 +309,11 @@ public class MainActivity extends AppCompatActivity
             if(!event.isNull("rsvpStatus")) {
                 myEvent.rsvpStatus = event.getString("rsvpStatus");
             }
+
+            if(!event.isNull("address")) {
+                myEvent.rsvpStatus = event.getString("address");
+            }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -487,10 +529,8 @@ public class MainActivity extends AppCompatActivity
     private class AsyncT extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
-            HttpClient httpclient = new DefaultHttpClient();
-            //HttpPost httppost = new HttpPost("<YOUR_SERVICE_URL>");
-
             try {
+                //HTTPClient myClient = new HTTPClient();
                 //Delete all users not attending an event
                 myDbHandler.dropAllNonAttendingUsers();
                 //Add my profile user objects to the Db
@@ -503,7 +543,9 @@ public class MainActivity extends AppCompatActivity
                 ArrayList<User> myProfileUserArrayList = myDbHandler.getMyProfileUserObjects();
 
                 //Limit number of elements in list.
-                userArrayList = new ArrayList<>(userArrayList.subList(1,200));
+                if(userArrayList.size() > 500) {
+                    userArrayList = new ArrayList<>(userArrayList.subList(1,550));
+                }
 
                 //Add all my profile users back in to the Array list that might have been removed in above step.
                 //Duplicates will not be added to the final list.
@@ -526,28 +568,74 @@ public class MainActivity extends AppCompatActivity
                     jsonUser.put("attending", user.attending);
                     usersJSONArray.put(jsonUser);
                 }
-                Log.d("omg", usersJSONArray.toString());
-                //This actually works!
-                //TODO: send JSON Object to Python server RE.
 
+                JSONObject json = new JSONObject();
+                json.put("data",usersJSONArray);
+                String response = HTTPClient.POST(json);
+                //Clean JSON string.
+                String userRecommendations = removeBackslash(response);
+                //Create JSON object for each user's recommendations.
+                userRecommendations = userRecommendations.replace("\\\"","'");
+                JSONObject userRecommendationsJSON = new JSONObject(userRecommendations.substring(1,userRecommendations.length()-1));
+                //Parse JSON object for my user recommendations.
+                getMyRecommendations(userRecommendationsJSON);
             } catch (Exception e) {
                 e.printStackTrace();
             }
             return null;
         }
 
-        public ArrayList<User> createNotAttendingUsers(ArrayList<User> userList, ArrayList<Event> eventList){
+        //":{\"userId\":
+        public String removeBackslash(String response) {
+            String userRecommendations = response.replace("\\","");
+            return userRecommendations;
+        }
+
+        public void getMyRecommendations(JSONObject userRecJSON) {
+            int i;
+            User user = new User();
+            final Profile profile = Profile.getCurrentProfile();
+
+            //Delete Recommendations before new recommendations are saved.
+            if(myDbHandler.getAllRecommendations() != null && userRecJSON != null){
+                myDbHandler.dropAllRecommendations();
+            }
+
+            try {
+                //Loop through JSON response until User info is found by matched userId.
+                for(i = 0; i < 1000; i++) {
+                    JSONObject myUserRecJSON = userRecJSON.getJSONObject(Integer.toString(i));
+                    user.userId = myUserRecJSON.getString("userId");
+                    if(user.userId.equals(profile.getId())) {
+                        //Get recommendations and save to DB for display later.
+                        Recommend rec = new Recommend();
+                        rec.id1 = myUserRecJSON.getString("1");
+                        rec.id2 = myUserRecJSON.getString("2");
+                        rec.id3 = myUserRecJSON.getString("3");
+                        rec.id4 = myUserRecJSON.getString("4");
+                        rec.id5 = myUserRecJSON.getString("5");
+                        rec.id6 = myUserRecJSON.getString("6");
+                        myDbHandler.addRecommend(rec);
+                        return;
+                    }
+                }
+            } catch(JSONException e) {
+                Log.d("RE", "Stuff happened. Don't care.");
+                return;
+            }
+        }
+
+        public ArrayList<User> createNotAttendingUsers(ArrayList<User> userList, ArrayList<Event> eventList) {
             ArrayList<User> newUserList = new ArrayList<>();
-            for (User user: userList) {
-                for (Event event: eventList) {
-                    if(user.eventId != event.id) {
+            for (User user : userList) {
+                for (Event event : eventList) {
+                    if (user.eventId != event.id) {
                         User newUser = new User();
                         newUser.eventId = event.id;
                         newUser.userId = user.userId;
                         newUser.username = user.username;
                         newUser.attending = "0";
                         newUserList.add(newUser);
-                        //myDbHandler.addUser(newUser);
                     }
                 }
             }
@@ -574,8 +662,7 @@ public class MainActivity extends AppCompatActivity
                     String stringResponse = response.getRawResponse();
                     JSONObject json = new JSONObject(stringResponse);
                     try {
-                        //ArrayList to hold all my profile users
-
+                        //JSONArray to hold all my profile users
                         JSONArray dataJSONArray = json.getJSONArray("data");
                         for(int i = 0; i < dataJSONArray.length(); i++){
                             JSONObject event = dataJSONArray.getJSONObject(i);
@@ -584,6 +671,7 @@ public class MainActivity extends AppCompatActivity
                             User user = new User();
                             user.userId = profile.getId();
                             user.eventId = myEvent.id;
+                            user.attending = "1";
                             saveUserToDb(user);
                         }
 

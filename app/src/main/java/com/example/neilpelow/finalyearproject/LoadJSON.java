@@ -111,9 +111,6 @@ public class LoadJSON {
                 new GraphRequest.Callback() {
                     @Override
                     public void onCompleted(GraphResponse response) {
-                        //Log user information
-                        Log.d("Graph", event.name + " attendees info successfully collected");
-                        Log.d("Graph", response.getRawResponse());
                         try {
                             callback.onCompleted(response);
                         } catch (JSONException e) {

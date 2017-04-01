@@ -20,7 +20,7 @@ public class CreateActivity extends Activity {
     private TextView eventId;
     private EditText editTextName;
     private EditText editTextStartTime;
-    private EditText editTextRSVP;
+    private EditText editTextAddress;
 
     private Button createButton;
     private Button cancelButton;
@@ -37,7 +37,7 @@ public class CreateActivity extends Activity {
         eventId = (TextView) findViewById(R.id.eventIdTextView);
         editTextName = (EditText) findViewById(R.id.editTextName);
         editTextStartTime = (EditText) findViewById(R.id.editTextStartTime);
-        //editTextRSVP = (EditText) findViewById(R.id.editTextRSVP);
+        editTextAddress = (EditText) findViewById(R.id.editTextAddress);
 
         String eventIdString = "eventIdKey";
         String eventDescString = "eventDescKey";
@@ -49,7 +49,9 @@ public class CreateActivity extends Activity {
         eventId.setText(unpackExtra(eventIdString));
         editTextName.setText(unpackExtra(eventNameString));
         editTextStartTime.setText(unpackExtra(eventStartTimeString));
-        //editTextRSVP.setText(unpackExtra(eventRSVPString));
+        editTextAddress.setText(unpackExtra(eventAddressString));
+
+
 
 
         //Get fields from selected Event in previous Activity (Create Meet Up).

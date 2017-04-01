@@ -76,6 +76,10 @@ public class Event {
             if(!event.isNull("rsvpStatus")) {
                 myEvent.rsvpStatus = event.getString("rsvpStatus");
             }
+
+            if(!event.isNull("address")) {
+                myEvent.address = event.getString("address");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }

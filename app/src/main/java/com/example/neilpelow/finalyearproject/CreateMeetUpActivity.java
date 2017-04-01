@@ -39,8 +39,6 @@ import java.util.List;
  * Created by neilpelow on 08/11/2016.
  */
 
-//TODO: Get json for event venues and load into objects for storage in Db.
-
 public class CreateMeetUpActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
     public ArrayList<Event> eventList = new ArrayList<>();
     public Button logoutButton;
@@ -106,6 +104,7 @@ public class CreateMeetUpActivity extends AppCompatActivity implements AdapterVi
             map.put(idKey, event.getId());
             map.put(startTimeKey, event.getStartTime());
             map.put(rsvpKey, event.getRsvpStatus());
+            map.put(addressKey, event.getAddress());
 
             mEventMapList.add(map);
         }
@@ -167,8 +166,17 @@ public class CreateMeetUpActivity extends AppCompatActivity implements AdapterVi
                 myEvent.startTime = event.getString("start_time");
             }
 
-            if(!event.isNull("rsvpStatus")) {
-                myEvent.rsvpStatus = event.getString("rsvpStatus");
+            if(!event.isNull("rsvp_status")) {
+                myEvent.rsvpStatus = event.getString("rsvp_status");
+            }
+            if(!event.isNull("place")) {
+                JSONObject placeJSONObject = event.getJSONObject("place");
+                String placeName = placeJSONObject.getString("name");
+                JSONObject locationJSONObject = placeJSONObject.getJSONObject("location");
+                String latitude = locationJSONObject.getString("latitude");
+                String longitude = locationJSONObject.getString("longitude");
+
+                myEvent.address = placeName;
             }
         } catch (JSONException e) {
             e.printStackTrace();
